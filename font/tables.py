@@ -2,8 +2,9 @@
 
 
 # fonttable.py - Script creating a fonttable for a 7-segment display
-# 2022 jan 03  v1  Maarten Pennings  created
-version = "v1"
+# 2022 jan 04  v2  Maarten Pennings  Added cross references to duplicates
+# 2022 jan 03  v1  Maarten Pennings  Created
+version = "v2"
 
 
 import os
@@ -55,34 +56,52 @@ from PIL import ImageDraw
 #          div_7s_hwidth | ## segment d ##                 ## p ##
 #                        v ###############                 #######
 
-div_7s_hlen    = 20
-div_7s_hwidth  = 5
-div_7s_vlen    = 20
-div_7s_vwidth  = 5
-div_7s_xsep    = 1
-div_7s_ysep    = 1
+div_7s_hlen        = 16
+div_7s_hwidth      = 5
+div_7s_vlen        = 16
+div_7s_vwidth      = 5
+div_7s_xsep        = 1
+div_7s_ysep        = 1
+                   
+#div_7s_bgcol       = "black"      #8
+#div_7s_bgcol       = "dimgray"    #7
+#div_7s_bgcol       = "gray"       #6
+#div_7s_bgcol       = "darkgray"   #5
+#div_7s_bgcol       = "silver"     #4
+#div_7s_bgcol       = "lightgray"  #3
+div_7s_bgcol       = "gainsboro"  #2
+#div_7s_bgcol       = "whitesmoke" #1
+#div_7s_bgcol       = "white"      #0
+div_7s_fgcol       = "blue"
+div_7s_fgerror     = "red"
+div_7s_fgfree      = "green"
+                   
+div_grid_a_hlen    = 56  # width of a cell in the ascii table
+div_grid_a_vlen    = 110 # height of a cell in the ascii table
+div_grid_s_hlen    = 75  # width of a cell in the segbits table
+div_grid_s_vlen    = 98 # height of a cell in the segbits table
+div_grid_hsep      = 1   # (horizontal) border thickness in both tables
+div_grid_vsep      = 1   # (vertical) border thickness in both tables
+div_grid_title     = 28  # height for title at bottom in both tables
+                   
+div_grid_xcount    = 16
+div_grid_yfirst    = 2
+div_grid_ylast     = 7
+                   
+div_mainfont_name  ="consolab.ttf"
+div_mainfont_size  = 20
 
-div_7s_bgcol   = "silver"
-div_7s_fgcol   = "blue"
-div_7s_fgerror = "red"
-div_7s_fgfree  = "green"
+div_mediumfont_name="consolab.ttf"
+div_mediumfont_size= 14
 
-div_grid_hlen  = 50
-div_grid_vlen  = 90
-div_grid_hsep  = 2
-div_grid_vsep  = 2
-div_grid_title = 28
+div_smallfont_name ="consolab.ttf"
+div_smallfont_size = 9
 
-div_grid_linecol = "silver"
-div_grid_bgcol   = "white"
-
-div_grid_xcount = 16
-div_grid_yfirst = 2
-div_grid_ylast  = 7
-
-div_char_fontname="consolab.ttf"
-div_char_fontsize=20
-div_char_fontcolor= "black"
+div_grid_linecol   = "black"
+div_grid_bgcol     = "white"
+div_hitext_color   = "black"
+div_lotext_color   = "silver"
+                   
 
 font_unique = [
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x0_
@@ -112,7 +131,7 @@ font_unique = [
   0b0110_0110, # 34 4
   0b0110_1101, # 35 5
   0b0111_1101, # 36 6
-  0b0010_0111, # 37 7
+  0b0000_0111, # 37 7
   0b0111_1111, # 38 8
   0b0110_1111, # 39 9
   0b0000_1001, # 3A :
@@ -185,24 +204,19 @@ font_unique = [
   0b0010_1110, # 79 y
   0b0001_0011, # 7A z
   0b0100_0110, # 7B {
-  0b0000_0110, # 7C |     # 0b0000_0100, # 7C |
+  0b0000_0100, # 7C |
   0b0111_0000, # 7D }
   0b0100_0001, # 7E ~
   0b0101_1101  # 7F del
 ]
 
-# Prepend the path of this script to filename to make it an absolute path
-def getPath(filename):
-  folder = os.path.dirname(os.path.realpath(__file__))
-  path = os.path.join(folder, filename)
-  return path
-
 
 grid_ycount = div_grid_ylast + 1 - div_grid_yfirst
-width_7s  = div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep + div_7s_vwidth     + div_7s_xsep + div_7s_vwidth
+width_7s  = div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep + div_7s_vwidth  #   + div_7s_xsep + div_7s_vwidth
 height_7s = div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth
-assert width_7s  <= div_grid_hlen
-assert height_7s <= div_grid_vlen
+assert width_7s  <= div_grid_a_hlen
+assert height_7s <= div_grid_a_vlen
+
 
 segment_a = 0b00000001
 segment_b = 0b00000010
@@ -213,136 +227,194 @@ segment_f = 0b00100000
 segment_g = 0b01000000
 segment_p = 0b10000000
 
-def draw_7s(draw,x,y,segments,fgcolor) :
+
+# Converts integer `val` to an 2 char long hexadecimal string 
+def hex2(val) :
+  return ("00"+hex(val)[2:])[-2:]
+
+
+# Converts integer `val` to an 8 char long binary string (with space in middle)
+def bin8(val) :
+  s = ("00000000"+bin(val)[2:])[-8:]
+  return s[0:4]+" "+s[4:]
+
+
+# Convert integer ascii value to character (but makes some unprintable ones readable)
+def chrr(ascii) :
+  if   ascii==0x20 : return "□"
+  elif ascii==0x7F : return "←"
+  return chr(ascii)
+
+
+# Draws a 7-segment at position `(x,y)` on `draw` using color `div_7s_bgcol` for inactive segments and color `fgcolor` for active segments.
+# A segment a,b,c,d,e,f,g,p is active if the corresponding bit is set in `segbits`.
+def draw_7s(draw,x,y,segbits,fgcolor) :
   # draw.rectangle([x,y,x+width_7s,y+height_7s],fgcolor)
   # draw segment 'a'
   x0 = x + div_7s_vwidth + div_7s_xsep
   y0 = y
-  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segments & segment_a else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_a else div_7s_bgcol)
   # draw segment 'b'
   x0 = x + div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segments & segment_b else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_b else div_7s_bgcol)
   # draw segment 'c'
   x0 = x + div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segments & segment_c else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_c else div_7s_bgcol)
   # draw segment 'd'
   x0 = x + div_7s_vwidth + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segments & segment_d else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_d else div_7s_bgcol)
   # draw segment 'e'
   x0 = x 
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segments & segment_e else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_e else div_7s_bgcol)
   # draw segment 'f'
   x0 = x 
   y0 = y + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segments & segment_f else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_f else div_7s_bgcol)
   # draw segment 'g'
   x0 = x + div_7s_vwidth + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segments & segment_g else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_g else div_7s_bgcol)
   # draw segment 'P'
   x0 = x + div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep + div_7s_vwidth + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_hwidth-1],fgcolor if segments & segment_p else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_p else div_7s_bgcol)
   
 
-def table_ascii_7segment(font7s,font7sname) :
+def table_ascii(font7s,font7sname) :
   # Compute size for image to generate
-  width  = div_grid_xcount*div_grid_hlen + (div_grid_xcount+1)*div_grid_hsep
-  height = grid_ycount*div_grid_vlen + (grid_ycount+1)*div_grid_vsep       + div_grid_title
+  width  = div_grid_xcount*div_grid_a_hlen + (div_grid_xcount+1)*div_grid_hsep
+  height = grid_ycount*div_grid_a_vlen + (grid_ycount+1)*div_grid_vsep       + div_grid_title + div_grid_vsep
   # Create image of computed size
   image = Image.new("RGBA", (width,height), div_grid_linecol ) 
   draw = ImageDraw.Draw(image)
-  char_font = ImageFont.truetype(getPath(div_char_fontname), div_char_fontsize)
+  mainfont = ImageFont.truetype(div_mainfont_name, div_mainfont_size)
+  smallfont = ImageFont.truetype(div_smallfont_name, div_smallfont_size)
   # Create the grid
-  for y in range(div_grid_yfirst,div_grid_ylast+1) :
-    y0 = (y-div_grid_yfirst)*(div_grid_vlen+div_grid_vsep) + div_grid_vsep
-    y1 = y0+div_grid_vlen-1
-    for x in range(div_grid_xcount) :
-      ascii = y*div_grid_xcount+x
-      # draw the grid cell
-      x0 = x*(div_grid_hlen+div_grid_hsep) + div_grid_hsep
-      x1 = x0+div_grid_hlen-1
+  for yy in range(div_grid_yfirst,div_grid_ylast+1) :
+    y0 = (yy-div_grid_yfirst)*(div_grid_a_vlen+div_grid_vsep) + div_grid_vsep
+    y1 = y0+div_grid_a_vlen-1
+    for xx in range(div_grid_xcount) :
+      y = y0+1 # vertical cursor in cell
+      ascii = yy*div_grid_xcount+xx
+      # Draw the grid cell
+      x0 = xx*(div_grid_a_hlen+div_grid_hsep) + div_grid_hsep
+      x1 = x0+div_grid_a_hlen-1
       draw.rectangle([x0,y0,x1,y1],fill=div_grid_bgcol)
-      # draw the hex value
+      # Draw the hex ASCII value
       label = f"{ascii:02X}"
-      sizex,sizey= draw.textsize( label, font=char_font)
-      draw.text( (x0+2,y0+2), label, div_grid_linecol, font=char_font)
-      head=sizey+2
-      # draw the char
-      if   ascii==0x20 : label = "□"
-      elif ascii==0x7F : label = "←"
-      else : label = chr(ascii)
-      sizex,sizey= draw.textsize( label, font=char_font)
-      draw.text( (x1-sizex-2,y0+2), label, div_char_fontcolor, font=char_font)
-      # draw the 7-segment
-      segments = font7s[ascii]
-      chars = [ascii for ascii,segs in enumerate(font_unique) if segs==segments and ascii>=32]
-      if len(chars)==0 : col = div_7s_fgfree
-      if len(chars)==1 : col = div_7s_fgcol
-      if len(chars)>=2 : col = div_7s_fgerror
-      draw_7s( draw, x0+(div_grid_hlen-width_7s)//2, y1+2-height_7s-(div_grid_vlen-head-height_7s)//2, segments, col )
+      sizex,sizey = draw.textsize( label, font=mainfont)
+      draw.text( (x0+4,y), label, div_lotext_color, font=mainfont)
+      # Draw the ASCII character
+      label = chrr(ascii)
+      sizex,sizey= draw.textsize( label, font=mainfont)
+      draw.text( (x1-sizex-4,y), label, div_hitext_color, font=mainfont)
+      y += div_mainfont_size
+      # Draw the duplicate hex numbers: (hex numbers of) chars with same segbits
+      segbits = font7s[ascii]
+      otherchars = [_ascii for _ascii,_segbits in enumerate(font_unique) if _ascii!=ascii and _segbits==segbits and _ascii>=32]
+      if len(otherchars)==0 : 
+        label = "no"
+        label2 = "duplicates"
+        col = div_lotext_color
+      else :
+        label = ' '.join(map(hex2,otherchars))
+        label2 = '  '.join(map(chrr,otherchars))
+        col = div_7s_fgerror
+      sizex,sizey= draw.textsize( label, font=smallfont)
+      draw.text( (x0+(div_grid_a_hlen-sizex)//2,y), label, col, font=smallfont)
+      y += div_smallfont_size+2
+      # Draw the duplicate characters
+      label = label2
+      sizex,sizey= draw.textsize( label, font=smallfont)
+      draw.text( (x0+(div_grid_a_hlen-sizex)//2,y), label, col, font=smallfont)
+      y += div_smallfont_size+4
+      # Draw the 7-segment
+      draw_7s( draw, x0+(div_grid_a_hlen-width_7s)//2, y, segbits, div_7s_fgcol )
+      # Draw the segbits
+      label = bin8(segbits)
+      sizex,sizey= draw.textsize( label, font=smallfont)
+      draw.text( (x0+(div_grid_a_hlen-sizex)//2, y1-2-sizey), label, div_lotext_color, font=smallfont)
+  # Draw title cell
+  x0 = div_grid_hsep
+  y0 = grid_ycount*(div_grid_a_vlen+div_grid_vsep) + div_grid_vsep
+  draw.rectangle([x0,y0,x0+width-2*div_grid_hsep-1,y0+div_grid_title-1],fill=div_grid_bgcol)
   # Draw the title
-  label = f"ASCII to 7-Segment for font '{font7sname}'"
-  sizex,sizey= draw.textsize( label, font=char_font)
-  draw.text( ((width-sizex)/2,height-sizey-2), label, div_char_fontcolor, font=char_font)
+  label = f"ASCII table for font '{font7sname}'"
+  sizex,sizey= draw.textsize( label, font=mainfont)
+  draw.text( ((width-sizex)/2,y0+(div_grid_title-sizey)/2+2), label, div_hitext_color, font=mainfont)
   return image
 
 
-def table_7segment_ascii(font7s,font7sname) :
+def table_segbits(font7s,font7sname) :
   # Compute size for image to generate
-  width  = 16*div_grid_hlen + (16+1)*div_grid_hsep
-  height = 8*div_grid_vlen + (8+1)*div_grid_vsep       + div_grid_title
+  width  = 16*div_grid_s_hlen + (16+1)*div_grid_hsep
+  height = 8*div_grid_s_vlen + (8+1)*div_grid_vsep       + div_grid_title + div_grid_vsep
   # Create image of computed size
   image = Image.new("RGBA", (width,height), div_grid_linecol ) 
   draw = ImageDraw.Draw(image)
-  char_font = ImageFont.truetype(getPath(div_char_fontname), div_char_fontsize)
+  mainfont = ImageFont.truetype(div_mainfont_name, div_mainfont_size)
+  mediumfont = ImageFont.truetype(div_mediumfont_name, div_mediumfont_size)
+  smallfont = ImageFont.truetype(div_smallfont_name, div_smallfont_size)
   # Create the grid
-  for y in range(8) :
-    y0 = y*(div_grid_vlen+div_grid_vsep) + div_grid_vsep
-    y1 = y0+div_grid_vlen-1
-    for x in range(16) :
-      segments = y*div_grid_xcount+x
-      # draw the grid cell
-      x0 = x*(div_grid_hlen+div_grid_hsep) + div_grid_hsep
-      x1 = x0+div_grid_hlen-1
+  for yy in range(8) :
+    y0 = yy*(div_grid_s_vlen+div_grid_vsep) + div_grid_vsep
+    y1 = y0+div_grid_s_vlen-1
+    for xx in range(16) :
+      y = y0+1 # vertical cursor in cell
+      segbits = yy*div_grid_xcount+xx
+      # Draw the grid cell
+      x0 = xx*(div_grid_s_hlen+div_grid_hsep) + div_grid_hsep
+      x1 = x0+div_grid_s_hlen-1
       draw.rectangle([x0,y0,x1,y1],fill=div_grid_bgcol)
-      # draw the hex value
-      label = f"{segments:02X}"
-      sizex,sizey= draw.textsize( label, font=char_font)
-      draw.text( (x0+2,y0+2), label, div_grid_linecol, font=char_font)
-      head=sizey+2
-      # draw the chars
-      chars = [ascii for ascii,segs in enumerate(font_unique) if segs==segments and ascii>=32]
-      label = ''.join(map(chr,chars)).replace("\x20","□").replace("\x7F","←")
-      sizex,sizey= draw.textsize( label, font=char_font)
-      draw.text( (x1-sizex-2,y0+2), label, div_char_fontcolor, font=char_font)
-      # draw the 7-segment
-      if len(chars)==0 : col = div_7s_fgfree
-      if len(chars)==1 : col = div_7s_fgcol
-      if len(chars)>=2 : col = div_7s_fgerror
-      draw_7s( draw, x0+(div_grid_hlen-width_7s)//2, y1+2-height_7s-(div_grid_vlen-head-height_7s)//2, segments, col )
+      # Draw the segbits
+      label = bin8(segbits)
+      sizex,sizey= draw.textsize( label, font=mediumfont)
+      draw.text( (x0+(div_grid_s_hlen-sizex)//2, y), label, div_lotext_color, font=mediumfont)
+      y += div_mediumfont_size+2
+      # Draw the duplicate hex numbers: (hex numbers of) chars with same segbits
+      chars = [_ascii for _ascii,_segbits in enumerate(font_unique) if _segbits==segbits and _ascii>=32]
+      if len(chars)==0 : 
+        label = "not"
+        label2 = "used"
+        col_label = div_lotext_color
+        col_7s = div_7s_fgfree
+      else :
+        label = ' '.join(map(hex2,chars))
+        label2 = '  '.join(map(chrr,chars))
+        col_label = div_hitext_color if len(chars)==1 else div_7s_fgerror
+        col_7s = div_7s_fgcol
+      sizex,sizey= draw.textsize( label, font=smallfont)
+      draw.text( (x0+(div_grid_s_hlen-sizex)//2,y), label, col_label, font=smallfont)
+      y += div_smallfont_size+2
+      # Draw the duplicate characters
+      label = label2
+      sizex,sizey= draw.textsize( label, font=smallfont)
+      draw.text( (x0+(div_grid_s_hlen-sizex)//2,y), label, col_label, font=smallfont)
+      y += div_smallfont_size+4
+      # Draw the 7-segment
+      draw_7s( draw, x0+(div_grid_s_hlen-width_7s)//2, y, segbits, col_7s )
+  # Draw title cell
+  x0 = div_grid_hsep
+  y0 = 8*(div_grid_s_vlen+div_grid_vsep) + div_grid_vsep
+  draw.rectangle([x0,y0,x0+width-2*div_grid_hsep-1,y0+div_grid_title-1],fill=div_grid_bgcol)
   # Draw the title
-  label = f"7-Segment to ASCII for font '{font7sname}'"
-  sizex,sizey= draw.textsize( label, font=char_font)
-  draw.text( ((width-sizex)/2,height-sizey-4), label, div_char_fontcolor, font=char_font)
+  label = f"SegBits table for font '{font7sname}'"
+  sizex,sizey= draw.textsize( label, font=mainfont)
+  draw.text( ((width-sizex)/2,y0+(div_grid_title-sizey)/2+2), label, div_hitext_color, font=mainfont)
   return image
-
 
 
 # The entry point for command line test
 if __name__ == "__main__":
-  image_ascii_7segment = table_ascii_7segment(font_unique,"unique")
-  filename = "table_ascii_7segment.png"
-  image_ascii_7segment.save(filename)
+  image = table_ascii(font_unique,"unique7s")
+  filename = "unique7s_ascii.png"
+  image.save(filename)
   print(filename)
-  image_7segment_ascii = table_7segment_ascii(font_unique,"unique")
-  filename = "table_7segment_ascii.png"
-  image_7segment_ascii.save(filename)
+  image = table_segbits(font_unique,"unique7s")
+  filename = "unique7s_segbits.png"
+  image.save(filename)
   print(filename)
-
-
-# A␣A︎␣️A
