@@ -5,22 +5,36 @@ This directory contains a Python project to tabulate the fonts.
 
 
 ## Unique7s
-The first font is named _Unique7s_. It maps all ASCII characters to a 7-segment display. The crucial design decision is that every ASCII character maps to a _unique_ display pattern. It makes some characters hard to read (see uppercase S or lower case f).
+The first font is named _Unique7s_. 
+It maps all ASCII characters to a 7-segment display. 
+The crucial design decision is that every ASCII character maps to a _unique_ display pattern. 
+It makes some characters hard to read (see uppercase S or lower case f).
   
 This is the ASCII table:
   
 ![ASCII table](unique7s_ascii.png)
   
-This is a systematic overview of all 7-segment patterns:
+This is a systematic overview of all 7-segment patterns.
+Note that unused patterns are green.
 
 ![SegBits table](unique7s_segbits.png)
 
 
 ## Mimic7s
 
-The second font is named _Mimic7s_. It maps all ASCII characters to a 7-segment display. The crucial design decision is each character is mapped to a 7-segment pattern that is as close as possible to what the character normally looks like. The downside is that one pattern may be used for several characters (see 5, uppercase S and lowercase s).
+The second font is named _Mimic7s_. 
+It maps all ASCII characters to a 7-segment display. 
+The crucial design decision is each character is mapped to a 7-segment pattern that is as close as possible to what the character normally looks like. 
+The downside is that one pattern may be used for several characters (see 5, uppercase S and lowercase s).
+These duplicates are marked red.
 
-TO BE DONE
+This is the ASCII table:
+  
+![ASCII table](mimic7s_ascii.png)
+  
+This is a systematic overview of all 7-segment patterns:
+
+![SegBits table](mimic7s_segbits.png)
 
   
 ## Use the script
