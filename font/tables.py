@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
 
-# fonttable.py - Script creating a fonttable for a 7-segment display
+# tables.py - Script creating a fonttable for a 7-segment display
+# 2022 jan 04  v3  Maarten Pennings  Added mimic7s
 # 2022 jan 04  v2  Maarten Pennings  Added cross references to duplicates
 # 2022 jan 03  v1  Maarten Pennings  Created
-version = "v2"
+version = "v3"
 
 
 import os
@@ -103,7 +104,7 @@ div_hitext_color   = "black"
 div_lotext_color   = "silver"
                    
 
-font_unique = [
+font_unique7s = [
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x0_
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x1_
   # pgfedcba
@@ -205,6 +206,114 @@ font_unique = [
   0b0001_0011, # 7A z
   0b0100_0110, # 7B {
   0b0000_0100, # 7C |
+  0b0111_0000, # 7D }
+  0b0100_0001, # 7E ~
+  0b0101_1101  # 7F del
+]
+
+
+font_mimic7s = [
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x0_
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x1_
+  # pgfedcba
+  0b0000_0000, # 20 spc
+  0b0010_1000, # 21 !
+  0b0010_0010, # 22 "
+  0b0110_0011, # 23 #
+  0b0100_1001, # 24 $
+  0b0010_0100, # 25 %
+  0b0111_1110, # 26 &
+  0b0000_0010, # 27 '
+  0b0011_1001, # 28 (
+  0b0000_1111, # 29 )
+  0b0000_0001, # 2A *
+  0b0100_0010, # 2B +
+  0b0000_1100, # 2C ,
+  0b0100_0000, # 2D -
+  0b0001_0000, # 2E .
+  0b0101_0010, # 2F /
+  # pgfe_dcba
+  0b0011_1111, # 30 0
+  0b0000_0110, # 31 1
+  0b0101_1011, # 32 2
+  0b0100_1111, # 33 3
+  0b0110_0110, # 34 4
+  0b0110_1101, # 35 5
+  0b0111_1101, # 36 6
+  0b0000_0111, # 37 7
+  0b0111_1111, # 38 8
+  0b0110_1111, # 39 9
+  0b0000_1001, # 3A :
+  0b0000_1010, # 3B ;
+  0b0101_1000, # 3C <
+  0b0100_1000, # 3D =
+  0b0100_1100, # 3E >
+  0b0100_1011, # 3F ?
+  # pgfe_dcba
+  0b0011_1011, # 40 @
+  0b0111_0111, # 41 A
+  0b0111_1100, # 42 B
+  0b0011_1001, # 43 C
+  0b0101_1110, # 44 D
+  0b0111_1001, # 45 E
+  0b0111_0001, # 46 F
+  0b0011_1101, # 47 G
+  0b0111_0110, # 48 H
+  0b0011_0000, # 49 I
+  0b0001_1110, # 4A J
+  0b0111_0101, # 4B K
+  0b0011_1100, # 4C L
+  0b0101_0101, # 4D M
+  0b0011_0111, # 4E N
+  0b0011_1111, # 4F O
+  # pgfe_dcba
+  0b0111_0011, # 50 P
+  0b0110_1011, # 51 Q
+  0b0011_0011, # 52 R
+  0b0110_1101, # 53 S
+  0b0111_1000, # 54 T
+  0b0011_1110, # 55 U
+  0b0111_0010, # 56 V
+  0b0110_1010, # 57 W
+  0b0011_0110, # 58 X
+  0b0110_1110, # 59 Y
+  0b0101_1011, # 5A Z
+  0b0011_1001, # 5B [
+  0b0110_0100, # 5C \
+  0b0000_1111, # 5D ]
+  0b0010_0011, # 5E ^
+  0b0000_1000, # 5F _
+  # pgfe_dcba
+  0b0010_0000, # 60 `
+  0b0101_1111, # 61 a
+  0b0111_1100, # 62 b
+  0b0101_1000, # 63 c
+  0b0101_1110, # 64 d
+  0b0111_1011, # 65 e
+  0b0111_0001, # 66 f
+  0b0110_1111, # 67 g
+  0b0111_0100, # 68 h
+  0b0000_0101, # 69 i
+  0b0000_1101, # 6A j
+  0b0111_0101, # 6B k
+  0b0011_1000, # 6C l
+  0b0101_0101, # 6D m
+  0b0101_0100, # 6E n
+  0b0101_1100, # 6F o
+  # pgfe_dcba
+  0b0111_0011, # 70 p
+  0b0110_0111, # 71 q
+  0b0101_0000, # 72 r
+  0b0110_1101, # 73 s
+  0b0111_1000, # 74 t
+  0b0001_1100, # 75 u
+  0b0111_0010, # 76 v
+  0b0110_1010, # 77 w
+  0b0001_0100, # 78 x
+  0b0010_1110, # 79 y
+  0b0101_1011, # 7A z
+  0b0100_0110, # 7B {
+  0b0000_0110, # 7C |
   0b0111_0000, # 7D }
   0b0100_0001, # 7E ~
   0b0101_1101  # 7F del
@@ -315,7 +424,7 @@ def table_ascii(font7s,font7sname) :
       y += div_mainfont_size
       # Draw the duplicate hex numbers: (hex numbers of) chars with same segbits
       segbits = font7s[ascii]
-      otherchars = [_ascii for _ascii,_segbits in enumerate(font_unique) if _ascii!=ascii and _segbits==segbits and _ascii>=32]
+      otherchars = [_ascii for _ascii,_segbits in enumerate(font7s) if _ascii!=ascii and _segbits==segbits and _ascii>=32]
       if len(otherchars)==0 : 
         label = "no"
         label2 = "duplicates"
@@ -376,7 +485,7 @@ def table_segbits(font7s,font7sname) :
       draw.text( (x0+(div_grid_s_hlen-sizex)//2, y), label, div_lotext_color, font=mediumfont)
       y += div_mediumfont_size+2
       # Draw the duplicate hex numbers: (hex numbers of) chars with same segbits
-      chars = [_ascii for _ascii,_segbits in enumerate(font_unique) if _segbits==segbits and _ascii>=32]
+      chars = [_ascii for _ascii,_segbits in enumerate(font7s) if _segbits==segbits and _ascii>=32]
       if len(chars)==0 : 
         label = "not"
         label2 = "used"
@@ -408,13 +517,20 @@ def table_segbits(font7s,font7sname) :
   return image
 
 
+def main(font7s,font7sname) :
+  print( f"processing '{font7sname}'")
+  image = table_ascii(font7s,font7sname)
+  filename = f"{font7sname}_ascii.png"
+  image.save(filename)
+  print( f"  saving {filename}")
+  image = table_segbits(font7s,font7sname)
+  filename = f"{font7sname}_segbits.png"
+  image.save(filename)
+  print( f"  saving {filename}")
+
+
 # The entry point for command line test
 if __name__ == "__main__":
-  image = table_ascii(font_unique,"unique7s")
-  filename = "unique7s_ascii.png"
-  image.save(filename)
-  print(filename)
-  image = table_segbits(font_unique,"unique7s")
-  filename = "unique7s_segbits.png"
-  image.save(filename)
-  print(filename)
+  print( f"tables.py {version}")
+  main(font_unique7s,"unique7s")
+  main(font_mimic7s,"mimic7s")
