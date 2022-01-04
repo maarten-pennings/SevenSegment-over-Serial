@@ -26,9 +26,8 @@ The second font is named _Mimic7s_.
 It maps all ASCII characters to a 7-segment display. 
 The crucial design decision is each character is mapped to a 7-segment pattern that is as close as possible to what the character normally looks like. 
 The downside is that one pattern may be used for several characters (see 5, uppercase S and lowercase s).
-These duplicates are marked red.
 
-This is the ASCII table:
+This is the ASCII table. Duplicates are shown in red.
   
 ![ASCII table](mimic7s_ascii.png)
   
