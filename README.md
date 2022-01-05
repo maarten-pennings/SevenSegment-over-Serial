@@ -7,6 +7,12 @@ A device consisting of 7-segment display units, controllable via a serial link (
 There is a [python script](font) to generate font tables.
 
 ## Electronics
-Studying how to design the [electronics](electronics).
+Design of the [electronics](electronics) (PCB).
+
+## Firmware
+todo
+
+## Enclosure 
+todo
 
 (end)
