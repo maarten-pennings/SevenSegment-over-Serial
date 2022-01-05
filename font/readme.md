@@ -1,7 +1,10 @@
 # Font
 
-The s4x7s device contains a firmware with two fonts.
+The SSoS device contains a firmware with two fonts.
 This directory contains a Python project to tabulate the fonts.
+Actually two tables are generated, one mapping ASCII to 7-segment patterns,
+and one mapping 7-segment patterns ("SegBits") to ASCII.
+The latter helps in identifying duplicates (e.g. 5 and S).
 
 
 ## Unique7s
@@ -39,9 +42,9 @@ This is a systematic overview of all 7-segment patterns:
 ## Use the script
 To use the script yourself (on Windows) you need:
 
-- Python (3.8+) on your system (add `setup.bat` to tweak the path tto `python.exe`)
+- Python (3.8+) on your system (add `setup.bat` to tweak the path to `python.exe`)
 - Start with an empty project directory; then copy `requirements.txt`, `setup.bat`, `run.bat`, and `tables.py` into it.
-- Run `setup.bat` to create a virtual Python environment (in subdirectory `env` in the project directory). 
+- Run `setup.bat` to create a virtual Python environment (in sub-directory `env` in the project directory). 
   Note that packages will be installed in the virtual environment, as listed in `requirements.txt`.
 - Run `run.bat` to generate the tables.
 - Change the font definitions in `tables.py` if you want to alter the fonts.

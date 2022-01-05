@@ -1,6 +1,6 @@
 # Electronics
 
-Electronic design of the s4x7s board.
+Electronic design of the SSoS board.
 
 ## Arduino Nano power architecture
 
