@@ -10,7 +10,7 @@ There is a [python script](font) to generate font tables.
 Design of the [electronics](electronics) (PCB).
 
 ## Firmware
-todo
+The [firmware](firmware) for the Arduino Nano, the controller on the SSoS board.
 
 ## Enclosure 
 todo
