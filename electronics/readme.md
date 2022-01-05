@@ -21,7 +21,8 @@ Note that
 
 **Conclusion**
 We power the board by connecting pin 27 (`+5V`) to the external host.
-The external host has a voltage of 3V3.
+This is fine as long as the external host a "standard" regulated voltage (e.g. 3V3 or 5V).
+
 
 ## Display control
 
@@ -47,6 +48,16 @@ The commons of the display ("rows"), need to sink, worst case, all 8 LEDs of the
 
 ![Display control](col-row.png)
 
+I decided to have current limiting resistors of 220 ohm.
+Red LEDs have a forward voltage of Vf=1.8. 
+With a host power of 3V3, the resistor drops 1.5, leading to a current of 6.8mA.
+With a host power of 5V, the resistor drops 3.2, leading to a current of 14.5mA.
+
+| host (V) | V_R (V)| I_R (R=220Ω) mA | I_display (8 LEDs) mA |
+|---------:|-------:|----------------:|----------------------:|
+|      3.3 |    1.5 |             6.8 |                    55 |
+|      5.0 |    3.2 |            14.5 |                   116 |
+
 
 ## Wiring
 
@@ -59,8 +70,15 @@ We tried to group these in so-called ports so that a single SFR assignment suffi
 
 ## PCB production.
 
+
 I used [EasyEda](https://easyeda.com) to design a PCB.
 First step was to make [schematics](Schematic_SSoS.pdf).
+
+I intend to use SSoS for LEGO Mindstorms.
+The output voltage is a bit low, so I decided to reserve room for a [boost converter](https://www.aliexpress.com/item/32762622485.html):
+ - Host has regulated power in the range of 3-6V: connect Vreg/GND/SER of J1.
+ - Otherwise mount buck or boost regulator on J2 and connect Vunr/GND/SER of J1
+
 Next comes layout.
 
 ![top](SSoS-top.png)
