@@ -57,6 +57,21 @@ We tried to group these in so-called ports so that a single SFR assignment suffi
 ![Wiring](pinout.png)
 
 
+## PCB production.
+
+I used [EasyEda](https://easyeda.com) to design a PCB.
+First step was to make [schematics](Schematic_SSoS.pdf).
+Next comes layout.
+
+![top](SSoS-top.png)
+
+![bottom](SSoS-bottom.png)
+
+The final step is to generate the [gerber](Gerber_SSoS.zip) file.
+I sent those to [JLCPCB](https://jlcpcb.com/).
+Five PCBs for €1.77 plus €3.84 shipping (3 weeks).
+
+
 ## References 
 
  - [Arduino Nano description](https://www.arduino.cc/en/pmwiki.php?n=Main/ArduinoBoardNano)
