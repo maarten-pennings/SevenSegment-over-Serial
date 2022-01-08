@@ -1,3 +1,5 @@
+// SSoS - proof of concept 1 - testing control via SFRs and timing
+
 // V_bat=3.3V, V_f_red=1.8V, so V_R=1.5V
 // R(Ω) I_led (mA) I_8leds (mA)
 //   75       20.0         160
