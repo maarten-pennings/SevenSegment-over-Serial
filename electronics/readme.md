@@ -43,20 +43,37 @@ Sinking 8 LEDs via 1 output port is **not** ok, that would be 80mA where the max
 
 **Conclusion**
 We connect the four 7-segment displays in a row/column fashion. 
-The individual segments ("columns") can be hooked directly to an output pin of the ATmega, provided that the current limiting resistor limits the LED current and thus the sourcing via the pin to 10mA.
-The commons of the display ("rows"), need to sink, worst case, all 8 LEDs of the display. As a result, we use a transistor.
+The individual segments ("rows") can be hooked directly to an output pin of the ATmega, provided that the current limiting resistor limits the LED current and thus the sourcing via the pin to 10mA.
+The commons of the display ("columns"), need to sink, worst case, all 8 LED segments of a display unit. As a result, we use a transistor.
+The principle is depicted below, for the real schematic see section below.
 
 ![Display control](col-row.png)
 
 I decided to have current limiting resistors of 220 ohm.
 Red LEDs have a forward voltage of Vf=1.8. 
-With a host power of 3V3, the resistor drops 1.5, leading to a current of 6.8mA.
-With a host power of 5V, the resistor drops 3.2, leading to a current of 14.5mA.
+With an external voltage of 3V3, the resistor drops 1.5V, leading to a current of 6.8mA for one segment and 55mA for all 8.
+With an external voltage of 5V0, the resistor drops 3.2V, leading to a current of 14.5mA for one segment and 116mA for all 8.
 
-| host (V) | V_R (V)| I_R (R=220Ω) mA | I_display (8 LEDs) mA |
-|---------:|-------:|----------------:|----------------------:|
-|      3.3 |    1.5 |             6.8 |                    55 |
-|      5.0 |    3.2 |            14.5 |                   116 |
+| VCC | V_R (V)| I_R (mA) R=220Ω | I_common (mA) 8 LEDs |
+|----:|-------:|----------------:|---------------------:|
+| 3.3 |    1.5 |             6.8 |                   55 |
+| 5.0 |    3.2 |            14.5 |                  116 |
+
+I'm not completely sure about the dimension of the base resistor.
+
+![Transistor](transistor.png)
+
+If we assume I_C to be 55mA, and the gain (hFE, beta?) to be 100, then I_B is only 55mA/100 or 0.55mA.
+There is a voltage drop across BE in the transistor, which is typically V_BE=0.7V. The emitter is grounded so V_B=0.7V.
+The Arduino GPIO pin outputs VCC=3.3V, so we need a voltage drop over the base resistor from 3.3V to 0.7V or 2.6V.
+With Ohm's law we find R = V_R/I_R = 2.6 / 0.55m = 4k7Ω.
+
+| VCC | I_C (mA) | I_B (mA) β=100 | V_R (V) VCC-V_B | R (Ω) V_R/I_B) |
+|----:|---------:|---------------:|----------------:|---------------:|
+| 3.3 |       55 |           0.55 |            2.6  |           4727 |
+| 5.0 |      116 |           1.16 |            4.3  |           3706 |
+
+So, 3k3 seems save to make sure the transistor is saturated...
 
 
 ## Wiring
@@ -66,6 +83,10 @@ Note that we have 6+6 row/column pins, which will be used to drive 8 columns and
 We tried to group these in so-called ports so that a single SFR assignment suffices.
 
 ![Wiring](pinout.png)
+
+The breadboard prototype works, but the LEGO mindstorms 3V3 is on the edge.
+
+![Breadboard](breadboard.jpg)
 
 
 ## PCB production.
