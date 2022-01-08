@@ -73,7 +73,7 @@ With Ohm's law we find R = V_R/I_R = 2.6 / 0.55m = 4k7Ω.
 | 3.3 |       55 |           0.55 |            2.6  |           4727 |
 | 5.0 |      116 |           1.16 |            4.3  |           3706 |
 
-So, 3k3 seems save to make sure the transistor is saturated...
+So, 2k2 seems save to make sure the transistor is saturated...
 
 
 ## Wiring
