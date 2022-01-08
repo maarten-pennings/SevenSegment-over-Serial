@@ -1,16 +1,19 @@
 // SSoS - proof of concept 1 - testing control via SFRs and timing
+// https://www.arduino.cc/en/uploads/Main/ArduinoNanoManual23.pdf
 
+
+// Resistor
+// --------
 // V_bat=3.3V, V_f_red=1.8V, so V_R=1.5V
 // R(Ω) I_led (mA) I_8leds (mA)
 //   75       20.0         160
 //  100       15.0         120
-//  220        6.8          55
+//  220        6.8          55 <= chosen
 //  330        4.5          36
 
-// https://www.arduino.cc/en/uploads/Main/ArduinoNanoManual23.pdf
-
 // Nano pinout
-// -----------USB----------------
+// -----------
+//                USB
 // PB5 SCK     D13 | D12 MISO     PB4
 //             3V3 | D11 MOSI PWM PB3
 //             REF | D10 SS   PWM PB2
@@ -26,8 +29,10 @@
 // PC6         RST | RST          PB6
 //             GND | D1  RX       PD1
 //             VIN | D0  TX       PD0
+//                ICSP
 
-
+// 7-segment unit pinout
+// ---------------------
 //  g f G a b
 // 10 9 8 7 6
 //    --a--
@@ -40,7 +45,9 @@
 //    --d--  (p)
 //  1 2 3 4 5
 //  e d G c p
-   
+
+// Row/column wiring
+// -----------------   
 // PD2 controls base of sink transistor of 7-segment unit 0 (left most)
 // PD3 controls base of sink transistor of 7-segment unit 1
 // PD4 controls base of sink transistor of 7-segment unit 2
@@ -55,16 +62,11 @@
 // PC4(A4) controls segment g (center) of all units
 // PC5(A5) controls segment p (point) of all units
 
+
+// Refresh time
+// ------------
 #define ONTIME_MS 5
 
-
-void setup() {
-  Serial.begin(115200);
-  PORTC = 0;   // all port C outputs low
-  PORTD = 0;   // all port D outputs low
-  DDRC = 0xFF; // all port C pins are output
-  DDRD = 0xFF; // all port D pins are output
-}
 
 uint8_t font[256] = {
   0b01001001, //   0  00  NUL
@@ -210,6 +212,14 @@ uint8_t frame[4] = {
   font['m'],
   font['o'],
 };
+
+void setup() {
+  Serial.begin(115200);
+  PORTC = 0;   // all port C outputs low
+  PORTD = 0;   // all port D outputs low
+  DDRC = 0xFF; // all port C pins are output
+  DDRD = 0xFF; // all port D pins are output
+}
 
 uint8_t unit = 0;
 uint8_t cursor = 0;
