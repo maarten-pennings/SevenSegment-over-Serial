@@ -14,6 +14,7 @@ Modeling the [interrupt service routine (ISR)](isr), a part of the firmware, for
 
 ## Firmware
 The [firmware](firmware) for the Arduino Nano, the controller on the SSoS board.
+First some proof of concept sketches, finally the "end-product".
 
 ## Enclosure 
 todo

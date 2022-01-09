@@ -53,9 +53,9 @@
 // PD4 controls base of sink transistor of 7-segment unit 2
 // PD5 controls base of sink transistor of 7-segment unit 3 (right most)
 
-// PD6 controls segment a (top) of all units
-// PD7 controls segment b (right-top) of all units
-// PC0 controls segment c (right-bottom) of all units
+// PD6     controls segment a (top) of all units
+// PD7     controls segment b (right-top) of all units
+// PC0(A0) controls segment c (right-bottom) of all units
 // PC1(A1) controls segment d (bottom) of all units
 // PC2(A2) controls segment e (left-bottom) of all units
 // PC3(A3) controls segment f (left-top) of all units

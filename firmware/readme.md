@@ -91,8 +91,55 @@ ISR( TIMER2_COMPA_vect ) {
 
 The logic analyzer shows the PoC2 is successful:
 
-![ISR 1ms](isr1ms.png)
+![ISR 1ms](poc1-isr1ms.png)
 
 
+## Proof of Concept 3 - Full driver
+
+Now that the Timer-interrupt mechanism is proven in PoC2, let's do a proof of concept for a complete driver.
+We merge-in the [Python model](../isr) developed earlier.
+
+Observe that we configured the driver as follows:
+
+```
+  uint8_t drv7s_framebuf[DRV7S_UNITCOUNT] = { 0b00000011, 0b00000100, 0b00000101, 0b00000110 };
+  ...
+  drv7s_brightness_set(3);
+  drv7s_blinking_mode_set(1);
+  drv7s_blinking_hilo_set(3,2);
+  drv7s_blinking_mask_set(0b0101);
+```
+
+We hooked the logic analyzer to the four columns, the ISR, and 3 rows.
+We captured a [Saleae trace](poc3-session.sal):
+
+![detail](poc3-saleae-detail.png)
+
+Notes:
+ - On the left hand side we see the labeled probes, 4 rows at the top, 3 columns at the bottom and
+   the timer on the middle.
+ - We see that the timer indeed fires every 1 ms (10 spikes in 10 ms).
+ - We see that first col 0 is hi, then col 1, then col2, and then col 3. And that repeats.
+ - This means that the frame time is 20 ms (4 units of 5 ms), a frame rate of 50 Hz.
+ - We see that col 0 is hi for 3 ms and lo for the next 2. This is due to the brightness setting being 3 (out of a fixed 5).
+ - When col 0 is hi, we see that the row 2 is 0, row 1 is 1 and row 0 is 1. This 011 of the frame buffer.
+ - Similarly col 1 is hi while the rows are 100 (second slot in the frame buffer).
+
+On this details level, we can not see blinking; that is on frame level.
+let's zoom out.
+
+![overview](poc3-saleae-overview.png)
+
+Notes:
+ - On the left we see the first frame marked with 4 vertical green lines: 
+   the rows are 011, 100, 101, and 110 (as we filled the frame buffer).
+ - This frame is repeated 3 times - because the blinking is set to 3 hi and 2 lo.
+ - The next two frames are lo. However not all units are off. 
+   The mask is 0b0101, so only unit 0 and 2 shall blink, and indeed only those two are off.
+ - The blinking period is 3+2, so after 5 frames the process repeats.
+
+I do get spikes now and then (see black arrow). Spend some hours on them, but I do not understand why.
+They do not cause visual artifacts...
+ 
 (end)
 
