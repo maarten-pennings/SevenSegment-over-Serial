@@ -140,6 +140,10 @@ Notes:
 
 I do get spikes now and then (see black arrow). Spend some hours on them, but I do not understand why.
 They do not cause visual artifacts...
- 
+
+## Real firmware
+
+Finally, the real firmware for [SSos](SSoS).
+
 (end)
 

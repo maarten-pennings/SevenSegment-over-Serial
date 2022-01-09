@@ -1,9 +1,14 @@
-// SSoS.ini - proof of concept 3 - using Python model 4
+// drv7s.cpp - the 7-segment driver
 
-// Public part of 7-segment driver
-#define DRV7S_SLOTCOUNT 5 // Number of brightness slots
-#define DRV7S_UNITCOUNT 4 // number of 7-segment units
-uint8_t drv7s_framebuf[DRV7S_UNITCOUNT] = { 0b00000011, 0b00000100, 0b00000101, 0b00000110 }; // desired content on the 7-segment units (each 1-bit is a segment that is on)
+#include "Arduino.h"
+#include "drv7s.h"
+
+// Define the following macro to have the builtin LED (it is on D13 = PB5) pulse on every click tick
+//#define DRV7S_DEBUG 1
+
+
+// The frame buffer is exposed publicly
+uint8_t drv7s_framebuf[DRV7S_UNITCOUNT] = { 0 }; // Desired content on the 7-segment units (each 1-bit is a segment that is on)
 
 // Private part of 7-segment driver
 static uint8_t drv7s_slot;       // current time subdivision of the control interval of a unit (for brightness control)
@@ -85,9 +90,11 @@ uint8_t drv7s_blinking_mask_get(  ) {
 
 // drv7s_isr() allocated to TIMER2_COMPA_vect
 ISR( TIMER2_COMPA_vect ) {
-  // Todo (Debug) track ISR ticks using builtin LED (it is on D13 = PB5)
-  PORTB |= 1<<5; // ON
-  PORTB &= ~(1<<5); // OFF
+  #if DRV7S_DEBUG
+    // Debug: track ISR ticks using builtin LED (it is on D13 = PB5)
+    PORTB |= 1<<5; // ON
+    PORTB &= ~(1<<5); // OFF
+  #endif
   // Timer tick: move to next slot
   drv7s_slot += 1;
   // If slot exceeds brightness level, switch current unit off 
@@ -125,8 +132,10 @@ void drv7s_setup() {
   DDRC = 0xFF; // all port C pins are output
   DDRD = 0xFF; // all port D pins are output
 
-  // Todo (Debug) track ISR ticks using builtin LED (it is on D13 = PB5)
-  DDRB  = 1<<5; // pin PB5 as output
+  #if DRV7S_DEBUG
+    // Debug: track ISR ticks using builtin LED (it is on D13 = PB5)
+    DDRB  = 1<<5; // pin PB5 as output
+  #endif
   
   // Configure initial state
   drv7s_reset();
@@ -143,31 +152,4 @@ void drv7s_setup() {
   // Enable timer compare interrupt
   TIMSK2 = 1 << OCIE2A;
   interrupts(); // Re-enable all interrupts - sei()
-}
-
-
-void setup() {
-  // Setup serial
-  Serial.begin(115200);
-  while( ! Serial ) delay(200);
-  Serial.println("\n\nSSoS - POC3 - Python model in C");
-
-  drv7s_setup();
-  drv7s_brightness_set(3);
-  drv7s_blinking_mode_set(1);
-  drv7s_blinking_hilo_set(3,2);
-  drv7s_blinking_mask_set(0b0101);
-
-  Serial.print( "brightness    " ); Serial.println( drv7s_brightness_get() );
-  Serial.print( "blinking mode " ); Serial.println( drv7s_blinking_mode_get() );
-  Serial.print( "blinking hi   " ); Serial.println( drv7s_blinking_hi_get() );
-  Serial.print( "blinking lo   " ); Serial.println( drv7s_blinking_lo_get() );
-  Serial.print( "blinking mask " ); Serial.println( drv7s_blinking_mask_get( ),BIN );
-
-  delay(1000);
-  noInterrupts();
-}
-
-void loop() {
-  // Nothing
 }
