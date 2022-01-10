@@ -8,8 +8,8 @@ Electronic design of the SSoS board.
 
 The Nano can be powered via
  - the `USB` connector;
- - 6 to 20V unregulated external power supply (pin 30, `VIN`); 
- - 5V regulated external power supply (pin 27, `+5V`).
+ - 6 to 20V _unregulated_ external power supply (pin 30, `VIN`) - it is regulated internally (by V-reg); 
+ - 5V _regulated_ external power supply (pin 27, `+5V`).
 
 Note that
  - the `+3V3` (pin 17) is a low-current output supplied by the CH340;
@@ -21,7 +21,7 @@ Note that
 
 **Conclusion**
 We power the board by connecting pin 27 (`+5V`) to the external host.
-This is fine as long as the external host a "standard" regulated voltage (e.g. 3V3 or 5V).
+This is fine as long as the external host a "standard" regulated voltage (e.g. 3V3 or 5V). It also means that the logic pins, e.g. the incoming `RX` will have the host level.
 
 
 ## Display control

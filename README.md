@@ -10,7 +10,9 @@ There is a [python script](font) to generate font tables.
 Design of the [electronics](electronics) (PCB).
 
 ## ISR model
-Modeling the [interrupt service routine (ISR)](isr), a part of the firmware, for supporting brightness control and blinking.
+Modeling the [interrupt service routine (ISR)](isr).
+The model is made in Python, but in the end, the ISR is the central part of the ATmega firmware, driving the 7-segments.
+The ISR needs to support brightness control and blinking.
 
 ## Firmware
 The [firmware](firmware) for the Arduino Nano, the controller on the SSoS board.

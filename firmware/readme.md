@@ -6,6 +6,7 @@ The firmware for the Arduino Nano, the controller on the SSoS board.
 ## Proof of Concept 1 - SFRs
 
 A first proof-of-concept Arduino [sketch](poc1) is available.
+
 It tests
  - Direct SFR writes
  - Timing (5ms per unit cause no visible flicker, this is 20ms per frame, or 50Hz)
@@ -15,8 +16,7 @@ It tests
 Using SFRs (Special Function Registers) means accessing hardware registers
 that control the IO pins. Instead of calling `digitalWrite()`, we call
 `PORTC=...`. Not only saves this the function call overhead, more importantly,
-with one write to PORTC, we set up to 8 IO pins in one go.
-
+with one write to `PORTC`, we set up to 8 IO pins in one go.
 See the [datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48P_88P_168P-DS40002065A.pdf?page=102) at page 102.
 
 
@@ -27,7 +27,7 @@ It tests using a timer to fire an ISR every 1ms.
 
 Notes:
  - The ATmega168 has 3 timers: timer0, timer1 and timer2. 
- - All timers depend on the system clock, normally that is 16MHz, but there is a pre-scaler.
+ - All timers depend on the system clock, normally that is 16MHz, but there is a pre-scaler between the system clock and the timer.
  - Timer0 is an 8bit timer; in Arduino it is used for e.g. `delay()` and `millis()`.
  - Timer1 is a 16bit timer; in Arduino it seems to be used for the Servo library.
  - Timer2 is an 8bit timer; in Arduino it seems to be used for `tone()`. PoC2 uses this one.
@@ -36,30 +36,33 @@ There is a fair bit of standardization by microchip in naming.
 The register names but also the bitfields in the registers are introduced in the 
 [datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48P_88P_168P-DS40002065A.pdf?page=155) on page 155.
 The names are also available in the Arduino header files.
-In the case of the ATmega168, here is the header (on my windows PC)
+In the case of the ATmega168, the header is located here (on my windows PC)
 `C:\Program Files (x86)\Arduino\hardware\tools\avr\avr\include\avr\iom168p.h`.
 
-In the names below, replace `n` with the timer index (0, 1, or 2) - again, we use 2.
 ```
 TCCRnA with bits      COMnA1 COMnA0 COMnB1 COMnB0 ----- -----  WGMn1  WGMn0
 TCCRnB with bits      FOCnA  FOCnB  -----  -----  WGMn2 CSn2   CSn1   CSn0
 TCNTn  bits not named
 OCRnA  bits not named
 OCRnB  bits not named
-TIMSK2                -----  -----  -----  -----  ----- OCIEnB OCIEnA TOIEn
-TIFR2                 -----  -----  -----  -----  ----- OCFnB  OCFnA  TOVn
+TIMSKn                -----  -----  -----  -----  ----- OCIEnB OCIEnA TOIEn
+TIFRn                 -----  -----  -----  -----  ----- OCFnB  OCFnA  TOVn
 ```
+
+In the names above, replace `n` with the timer index (0, 1, or 2) - we use (timer) 2.
 
 With registers `TCCR2A` and `TCCR2B` we set the mode (Clear Timer on Compare Match: `WGM2=010`)
 and the prescaler (64 with Clock Select: `CS2=100`). 
 The `TCNT2` is the actual counter, we do not read or write it (but the hardware does).
 
 With `OCR2A` we set the value to which we want the timer to count, generate and interrupt, and clear.
-Since the sustem clock (`F_CPU`) is 16MHz, and the pre-scaler is 64, timer 2 is fed with a frequency of 250 000 Hz, so it will increment
-every 4us. Therefore we need 250 increments for an interrupt every 1ms. Therefore we need to set `OCR2A` to 249 (because it starts counting at 0).
+Since the sustem clock (`F_CPU`) is 16MHz, and the pre-scaler is 64, timer 2 is fed with a frequency of 250 000 Hz, 
+so it will increment every 4us. Therefore we need 250 increments for an interrupt every 1ms. 
+We need to set `OCR2A` to 249 (because it starts counting at 0).
 
-In `TIMSK2` we set `OCIE2A`, i.e. Interrupt Enable for Output Compare Match A.
-This means that we have to install an ISR for ` TIMER2_COMPA_vect`.
+In `TIMSK2` we set bit `OCIE2A`, i.e. Interrupt Enable for Output Compare Match A.
+This means that we have to install an ISR for `TIMER2_COMPA_vect`.
+Our ISR just spikes the built-in LED, so that we can check timing on a logic analyzer.
 
 See e.g. [Arduino 101: Timers and Interrupts](https://www.robotshop.com/community/forum/t/arduino-101-timers-and-interrupts/13072).
 or [instructables](https://www.instructables.com/Arduino-Timer-Interrupts/).
@@ -110,7 +113,7 @@ Observe that we configured the driver as follows:
   drv7s_blinking_mask_set(0b0101);
 ```
 
-We hooked the logic analyzer to the four columns, the ISR, and 3 rows.
+We hooked the logic analyzer to the four columns, the ISR beats, and (the first) 3 rows.
 We captured a [Saleae trace](poc3-session.sal):
 
 ![detail](poc3-saleae-detail.png)
@@ -143,7 +146,7 @@ They do not cause visual artifacts...
 
 ## Real firmware
 
-Finally, the real firmware for [SSos](SSoS).
+Finally, the real firmware for [SSoS](SSoS).
 
 (end)
 
