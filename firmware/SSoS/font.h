@@ -3,10 +3,6 @@
 #define __FONT__H__
 
 
-// Version of the font definitions
-#define FONT_VERSION  4
-
-
 // Font IDs
 #define FONT_UNIQUE7S 0 // ID for  font "Unique7s" (every ASCII character maps to a _unique_ display pattern)
 #define FONT_MIMIC7S  1 // ID for  font "Mimic7s" (every ASCII character maps closest to normal way it looks)

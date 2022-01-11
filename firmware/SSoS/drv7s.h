@@ -2,8 +2,6 @@
 #ifndef __DRV7S__H__
 #define __DRV7S__H__
 
-#define DRV7S_VERSION 1                                    // Version of this driver
-
 #define DRV7S_UNITCOUNT 4                                  // Number of 7-segment units
 extern uint8_t drv7s_framebuf[DRV7S_UNITCOUNT];            // Desired content on the 7-segment units (each 1-bit is a segment that is on)
 
