@@ -6,7 +6,7 @@
 // Font Unique7s maps all ASCII characters to a 7-segment display
 // such that every ASCII character maps to a _unique_ display pattern. 
 // It makes some characters hard to read (see uppercase S or lower case f).
-static uint8_t font_unique7s[0x80] = {
+static const uint8_t font_unique7s[0x80] PROGMEM = {
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // padding for 0x0_
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // padding for 0x1_
   //pgfedcba
@@ -117,7 +117,7 @@ static uint8_t font_unique7s[0x80] = {
 // Font Mimic7s maps all ASCII characters to a 7-segment display
 // such that is as close as possible to what the character normally looks like. 
 // The downside is that one pattern may be used for several characters (see 5, uppercase S and lowercase s).
-static uint8_t font_mimic7s[0x80] = {
+static const uint8_t font_mimic7s[0x80] PROGMEM = {
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // padding for 0x0_
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // padding for 0x1_
   //pgfedcba
@@ -224,10 +224,11 @@ static uint8_t font_mimic7s[0x80] = {
   0b01011101  // 7F del
 };
 
-uint8_t * font_variants[] = { font_unique7s, font_mimic7s };
+static const uint8_t * const font_variants[] PROGMEM = { font_unique7s, font_mimic7s };
 
 uint8_t font_get(uint8_t id, uint8_t ch) {
   // We only have patterns for the lower half of the characters (below 0x80).
   // For the upper half, we add the dot of the 7-segment.
-  return font_variants[id][ch & 0x7F] | (ch&0x80);
+  const uint8_t * font = pgm_read_word(&font_variants[id]);
+  return pgm_read_byte(&font[ch & 0x7F]) | (ch&0x80);
 }
