@@ -1,13 +1,13 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "4.0"
+#define APP_VERSION  "4.1"
 
 #include "drv7s.h"
 #include "font.h"
 
 
-// State introduced by the app (driver also has some)
+// State introduced by the app (driver also has some).
 uint8_t app_fontid;
 uint8_t app_cursor;
 uint8_t app_dotenabled;
@@ -15,7 +15,7 @@ uint8_t app_charenabled;
 uint8_t app_chartime10ms;
 
 
-// Reset the complete state (driver and app)
+// Reset the complete state (driver and app).
 void app_reset() {
   drv7s_reset();
   app_fontid = FONT_MIMIC7S; // FONT_UNIQUE7S;
@@ -44,7 +44,7 @@ void app_putpattern(uint8_t pattern) {
 }
 
 
-// Makes the dot or p-segment (of the character just before cursor) hi.
+// Makes the dot or p-segment light up (of the character just before cursor).
 void app_putdot( ) {
   if( app_cursor>0 ) {
     drv7s_framebuf[app_cursor-1] |= 0x80;    
@@ -52,9 +52,9 @@ void app_putdot( ) {
 }
 
 
-// Writes the string `chars` to the display, starting from position 0, 
-// clipping if longer than DRV7S_UNITCOUNT, padding with blanks if shorted than DRV7S_UNITCOUNT.
-// Does not change `cursor`.
+// Writes the string `chars` to the display, starting from position 0.
+// Clips if longer than DRV7S_UNITCOUNT, pads with blanks if shorted than DRV7S_UNITCOUNT.
+// Does have "dot enabled". Does not change `cursor`.
 void app_putchars(const char *chars) {
   uint8_t i = 0;
   while( i<DRV7S_UNITCOUNT && *chars!=0 ) {
@@ -74,7 +74,7 @@ void app_putchars(const char *chars) {
 
 
 // Returns chars s[p1..p2), but any `dot` character is replaced by a dot. Truncates at DRV7S_UNITCOUNT.
-// Appends \0. Uses global buf, so one call at a time.
+// Appends \0. Uses global buffer, so one call at a time.
 char app_string_buf[DRV7S_UNITCOUNT+2];
 const char* app_slice(const char * s, uint8_t p1, uint8_t p2, char dot='\0' ) {
   uint8_t i=0;
@@ -88,8 +88,8 @@ const char* app_slice(const char * s, uint8_t p1, uint8_t p2, char dot='\0' ) {
 }
 
 
-// Converts `val` to a string of the form 0xXX
-// Appends \0. Uses global buf, so one call at a time.
+// Converts `val` to a string of the form 0xXX.
+// Appends \0. Uses global buffer, so one call at a time.
 const char* app_int(uint8_t val) {
   app_string_buf[0] = '0';
   app_string_buf[1] = 'x';
@@ -102,7 +102,7 @@ const char* app_int(uint8_t val) {
 }
 
 
-// String table usable to display all known strings (versions, driver state, app state)
+// String table usable to display all known strings (versions, driver state, app state).
 #define APP_STRING_ID_COUNT 34
 const char* app_string(uint8_t id) {
   // App versions, compiler, date/time
@@ -170,41 +170,41 @@ const char* app_string(uint8_t id) {
 // Some commands need one or more arguments (eg SET-FONT needs one more byte, the font id).
 // The table below shows the length of each command plus arguments.
 // A length of 0 indicates not-a-command, 1 indicates command-without-args, 2 indicates command-with-one byte arg, etc
-// The table also shows the defaults (DFLT column), and actual ascii value in DEC/HEX/NAME/KEY and DESCRIPTION/
+// The table also shows the defaults (DFLT column), and actual ascii value in HEX/DEC/NAME/KEY and DESCRIPTION/
 uint8_t app_cmd_len[0x20] = { 
-//LEN     COMMAND                  DFLT  DEC HEX NAME KEY ESC DESCRIPTION
-    0, // ignored                          0  00  NUL  ^@  \0 Null
-    2, // SET-FONT(0..1)             01    1  01  SOH  ^A     Start of Heading
-    2, // SET-BRIGHTNESS(1..4)       03    2  02  STX  ^B     Start of Text
-    2, // SET-BLINK-MASK(0..15)      0F    3  03  ETX  ^C     End of Text
-    2, // SET-BLINK-TIMES(0..F|0..F) 55    4  04  EOT  ^D     End of Transmission
-    3, // SHOW-STRINGS(from,to)      -     5  05  ENQ  ^E     Enquiry
-    1, // RESET                      -     6  06  ACK  ^F     Acknowledgement
-    1, // BLINK-ENABLE              (11)   7  07  BEL  ^G  \a Bell (beep or the flash)
-    1, // CURSOR-LEFT                -     8  08  BS   ^H  \b Backspace
-    1, // CURSOR-RIGHT               -     9  09  HT   ^I  \t Horizontal Tab
-    1, // LINE-COMMIT                -    10  0A  LF   ^J  \n Line Feed (moves line down)
-    1, // BLINK-DISABLE              yes  11  0B  VT   ^K  \v Vertical Tab
-    1, // CLEAR-AND-HOME             yes  12  0C  FF   ^L  \f Form Feed (lcear the screen)
-    1, // CURSOR-HOME                -    13  0D  CR   ^M  \r Carriage Return (start of line)
-    1, // DOT-DISABLE               (15)  14  0E  SO   ^N     Shift Out
-    1, // DOT-ENABLE                 yes  15  0F  SI   ^O     Shift In
-    1, // CHAR-ENABLE                yes  16  10  DLE  ^P     Data Link Escape
-    1, // CHAR-DISABLE              (16)  17  11  DC1  ^Q     Device Control 1 (often XON)
-    2, // CHAR-TIME                  50   18  12  DC2  ^R     Device Control 2
-    2, // PATTERN-ONE(pat)           -    19  13  DC3  ^S     Device Control 3 (often XOFF)
-    5, // PATTERN-ALL(p0,p1,p2,p3)   -    20  14  DC4  ^T     Device Control 4
-    0, // ignored                         21  15  NAK  ^U     Negative Acknowledgement
-    0, // ignored                         22  16  SYN  ^V     Synchronous Idle
-    0, // ignored                         23  17  ETB  ^W     End of Transmission Block
-    0, // ignored                         24  18  CAN  ^X     Cancel
-    0, // ignored                         25  19  EM   ^Y     End of Medium
-    0, // ignored                         26  1A  SUB  ^Z     Substitute (windows: end-of-file)
-    0, // ignored                         27  1B  ESC  ^[  \e   Escape (start of sequence)
-    0, // ignored                         28  1C  FS   ^\     File Separator
-    0, // ignored                         29  1D  GS   ^]     Group Separator
-    0, // ignored                         30  1E  RS   ^^     Record Separator
-    0, // ignored                         31  1F  US   ^_     Unit Separator
+//LEN     COMMAND                  DFLT  HEX DEC NAME KEY ESC DESCRIPTION
+    0, // ignored                         00   0  NUL  ^@  \0 Null
+    2, // SET-FONT(0..1)             01   01   1  SOH  ^A     Start of Heading
+    2, // SET-BRIGHTNESS(1..4)       03   02   2  STX  ^B     Start of Text
+    2, // SET-BLINK-MASK(0..15)      0F   03   3  ETX  ^C     End of Text
+    2, // SET-BLINK-TIMES(0..F|0..F) 55   04   4  EOT  ^D     End of Transmission
+    3, // SHOW-STRINGS(from,to)      -    05   5  ENQ  ^E     Enquiry
+    1, // RESET                      -    06   6  ACK  ^F     Acknowledgment
+    1, // BLINK-ENABLE              (0B)  07   7  BEL  ^G  \a Bell (beep or the flash)
+    1, // CURSOR-LEFT                -    08   8  BS   ^H  \b Backspace
+    1, // CURSOR-RIGHT               -    09   9  HT   ^I  \t Horizontal Tab
+    1, // LINE-COMMIT                -    0A  10  LF   ^J  \n Line Feed (moves line down)
+    1, // BLINK-DISABLE              yes  0B  11  VT   ^K  \v Vertical Tab
+    1, // CLEAR-AND-HOME             yes  0C  12  FF   ^L  \f Form Feed (clear the screen)
+    1, // CURSOR-HOME                -    0D  13  CR   ^M  \r Carriage Return (start of line)
+    1, // DOT-DISABLE               (0F)  0E  14  SO   ^N     Shift Out
+    1, // DOT-ENABLE                 yes  0F  15  SI   ^O     Shift In
+    1, // CHAR-ENABLE                yes  10  16  DLE  ^P     Data Link Escape
+    1, // CHAR-DISABLE              (10)  11  17  DC1  ^Q     Device Control 1 (often XON)
+    2, // CHAR-TIME                  50   12  18  DC2  ^R     Device Control 2
+    2, // PATTERN-ONE(pat)           -    13  19  DC3  ^S     Device Control 3 (often XOFF)
+    5, // PATTERN-ALL(p0,p1,p2,p3)   -    14  20  DC4  ^T     Device Control 4
+    0, // ignored                         15  21  NAK  ^U     Negative Acknowledgment
+    0, // ignored                         16  22  SYN  ^V     Synchronous Idle
+    0, // ignored                         17  23  ETB  ^W     End of Transmission Block
+    0, // ignored                         18  24  CAN  ^X     Cancel
+    0, // ignored                         19  25  EM   ^Y     End of Medium
+    0, // ignored                         1A  26  SUB  ^Z     Substitute (windows: end-of-file)
+    0, // ignored                         1B  27  ESC  ^[  \e Escape (start of sequence)
+    0, // ignored                         1C  28  FS   ^\     File Separator
+    0, // ignored                         1D  29  GS   ^]     Group Separator
+    0, // ignored                         1E  30  RS   ^^     Record Separator
+    0, // ignored                         1F  31  US   ^_     Unit Separator
 };
 
 
@@ -272,6 +272,8 @@ void app_cmd_exec(uint8_t * argv ) {
 }
 
 
+// Enable Serial for incoming characters.
+// Enable 7-Segment driver (timer based interrupt service routine)
 void setup() {
   // Setup serial
   Serial.begin(115200);
@@ -286,28 +288,31 @@ void setup() {
 }
 
 
-#define APP_CMD_BUFSIZE  5 // so that biggest command (PATTERN-ALL) fits
-#define APP_CMD_ARGC     (app_cmd_len[app_cmd_argv[0]])
-uint8_t app_cmd_argv[APP_CMD_BUFSIZE];
-uint8_t app_cmd_argc;
+// Some incoming characters are actually a command, optionally with some arguments (extra characters).
+#define APP_CMD_BUFSIZE  5 // Size for command buffer; biggest command (PATTERN-ALL) must fit.
+#define APP_CMD_ARGC     (app_cmd_len[app_cmd_argv[0]]) // The number of bytes required for the command in app_cmd_argv[0].
+uint8_t app_cmd_argv[APP_CMD_BUFSIZE]; // At index 0 the command, next its arguments. Note on startup this hold command 0 with len 0.
+uint8_t app_cmd_argc;  // Number of bytes for app_cmd_argv[0] that are already collected
 
 
+// Process characters coming in from Serial. 
+// Either send char to display with app_putpattern(), or treat it as a command app_cmd_exec().
 void loop() {
   int ch= Serial.read();
   uint8_t ascii = ch & 0x7F;
   if( ch==-1 ) {
     // no char, skip
-  } else if( app_cmd_argc < APP_CMD_ARGC ) {
+  } else if( app_cmd_argc < APP_CMD_ARGC ) { // command pending (collecting arguments)
     app_cmd_argv[app_cmd_argc] = ch;
     app_cmd_argc++;
     if( app_cmd_argc==APP_CMD_ARGC ) {
-      app_cmd_exec(app_cmd_argv); // command has all args, exec
+      app_cmd_exec(app_cmd_argv); // all arguments are collected for command, exec
     }
-  } else if( ascii<0x20 ) {
+  } else if( ascii<0x20 ) { // incoming char is a (potentially) a command
     if( app_cmd_len[ascii]>0 ) {
       app_cmd_argv[0] = ascii;
       app_cmd_argc = 1;
-      if( app_cmd_argc==APP_CMD_ARGC ) app_cmd_exec(app_cmd_argv); // command needs no args, exec now
+      if( app_cmd_argc==APP_CMD_ARGC ) app_cmd_exec(app_cmd_argv); // command needs no arguments, exec now
     }
   } else if( ascii=='.' && app_dotenabled ) {
     app_putdot( );  
