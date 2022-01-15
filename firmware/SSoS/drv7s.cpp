@@ -8,7 +8,7 @@
 
 
 // The frame buffer is exposed publicly
-uint8_t drv7s_framebuf[DRV7S_UNITCOUNT] = { 0 }; // Desired content on the 7-segment units (each 1-bit is a segment that is on)
+uint8_t drv7s_framebuf[DRV7S_UNITCOUNT]; // Desired content on the 7-segment units (each 1-bit is a segment that is on)
 
 // Private part of 7-segment driver
 static uint8_t drv7s_slot;       // current time subdivision of the control interval of a unit (for brightness control)
@@ -22,17 +22,18 @@ static uint8_t drv7s_noblinkmask;// desired bit mask indicating which units are 
 
 // Resets state (brightness:4, blinking:disabled,25/25,0b0000)
 void drv7s_reset() {
-  drv7s_slot       = DRV7S_SLOTCOUNT-1; // First ISR will roll over to slot 0
-  drv7s_unit       = DRV7S_UNITCOUNT-1; // First ISR will roll over to unit 0  
+  memset(drv7s_framebuf,0,DRV7S_UNITCOUNT); // Wipe screen
 
-  drv7s_brightness = DRV7S_SLOTCOUNT-1; // Brightness to 4/5
+  drv7s_slot       = DRV7S_SLOTCOUNT-1;     // First ISR will roll over to slot 0
+  drv7s_unit       = DRV7S_UNITCOUNT-1;     // First ISR will roll over to unit 0  
+  drv7s_frame      = drv7s_framecount-1;    // First ISR will roll over to frame 0  
 
-  // 1 frame is 20ms
-  drv7s_alwayshi   = 1;  // blinking disabled
-  drv7s_framecount = 50; // 1000 ms
-  drv7s_frameshi   = 25; //  500 ms
-  drv7s_noblinkmask= 0;  // all units blink
-  drv7s_frame      = drv7s_framecount-1;// First ISR will roll over to frame 0  
+  drv7s_brightness = DRV7S_SLOTCOUNT-1;     // Brightness to 4/5
+
+  drv7s_alwayshi   = 1;                     // blinking disabled
+  drv7s_framecount = 50;                    // 1000 ms (1 frame is 20ms)
+  drv7s_frameshi   = 25;                    //  500 ms
+  drv7s_noblinkmask= 0;                     // all units blink
 }
 
 // Sets the brightness level to `val`, iff 1<=val<=DRV7S_SLOTCOUNT.
@@ -71,7 +72,7 @@ uint8_t drv7s_blinking_lo_get(  ) {
   return drv7s_framecount - drv7s_frameshi;
 }
 
-// Sets the blinking mask: if bit i is set, unit i will blink.
+// Sets the blinking mask: if bit i is set, unit i will blink. Only uses lower DRV7S_UNITCOUNT bits.
 void drv7s_blinking_mask_set( uint8_t mask ) {
   drv7s_noblinkmask = ~mask; 
 }

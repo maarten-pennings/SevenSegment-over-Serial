@@ -12,11 +12,11 @@ uint8_t drv7s_brightness_get(  );                          // Returns current br
 void    drv7s_blinking_mode_set( uint8_t enabled );        // Sets the blinking mode to `enabled` (0 is disabled, otherwise enabled).
 uint8_t drv7s_blinking_mode_get(  );                       // Returns current blinking mode.
 
-void    drv7s_blinking_hilo_set( uint8_t hi, uint8_t lo ); // Sets the blinking to `hi` frames "on", then `lo` frames "off", iff hi>=1 and lo>=1 and hi+lo<255.
-uint8_t drv7s_blinking_hi_get(  );                         // Returns current blinking hi time (in frames).
-uint8_t drv7s_blinking_lo_get(  );                         // Returns current blinking lo time (in frames).
+void    drv7s_blinking_hilo_set( uint8_t hi, uint8_t lo ); // Sets the blinking to `hi` frames "on", then `lo` frames "off", iff hi>=1 and lo>=1 and hi+lo<256.
+uint8_t drv7s_blinking_hi_get(  );                         // Returns current blinking hi time (in frames ie units of 5ms).
+uint8_t drv7s_blinking_lo_get(  );                         // Returns current blinking lo time (in frames ie units of 5ms).
 
-void    drv7s_blinking_mask_set( uint8_t mask );           // Sets the blinking mask: if bit i is set, unit i will blink.
+void    drv7s_blinking_mask_set( uint8_t mask );           // Sets the blinking mask: if bit i is set, unit i will blink. Only uses lower DRV7S_UNITCOUNT bits.
 uint8_t drv7s_blinking_mask_get(  );                       // Returns current blinking mask.
 
 void    drv7s_setup();                                     // Setup (hardware registers) for 7-segments
