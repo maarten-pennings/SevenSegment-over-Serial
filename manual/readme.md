@@ -42,16 +42,16 @@ the incoming character. The cursor remains at 4.
 When a character is received by the device, its ASCII value if first converted to a 7-segment **pattern**
 by looking it up in the current **font**. It is the pattern that is stored in the frame buffer.
 So changing the font does not alter the screen content that is already present.
-Two fonts are available _mimic7s_ for optimal readability and _unique7s_ where characters have unique looks 
-`dD5S` shows as follows (_mimic7s_ on the left, _unique7s_ on the right):
+Two fonts are available _mimic7s_ for optimal readability and _unique7s_ where characters have unique looks. 
+For example, `dD5S` shows as follows (_mimic7s_ on the left, _unique7s_ on the right):
 
 ![enabled](mimic-dD5S.png) ![disabled](unique-dD5S.png)
 
 Note that the fonts only support ASCII. The 7-segment pattern associated by a **high "ASCII" value** `128+i`, 
 is the pattern associated with ASCII value `i` but with the (decimal) dot also switched on. Note that 
-none of the patterns below 128 have the (decimal) dot on.
+_none_ of the patterns below 128 have the (decimal) dot on, so this makes all character patterns unique (in _unique7s_).
 
-Also note that the fonts do not associate patterns with ASCI values below 32. 
+Also note that the fonts do not associate patterns with ASCII values below 32. 
 Those character are not displayable, instead those are **control characters** changing the state of the SSoS device. 
 For example, the FF (Form Feed) character in ASCII (hex value 0C, decimal value 12, in C with `\f`) 
 will clear the frame buffer and set the cursor to 0.
@@ -59,7 +59,7 @@ Other codes will change the font, brightness, blinking, dot replacement or (scro
 of the control codes need to be followed by extra bytes, e.g. to pass the font ID.
 
 The device can operate in two modes: character (default) and line. In **character mode**, each 
-(displayable) character is immediately appended to the frame buffer and is thus visible 
+(displayable) character is immediately appended to the frame buffer and is thus visible. 
 As noted above, if the cursor was at position 4, this causes a scroll. 
 Scrolling is a nice feature for strings longer than 4, and this is where character mode is useful.
 After every scroll, the system actually pauses (a configurable CHAR-TIME) before processing the next character.
@@ -67,7 +67,7 @@ This results in a smooth scroll, assuming the host feeds characters faster than 
 
 Downsides of character mode is speed (due to CHAR-TIME) and partial display updates. This is where line mode comes in.
 In **line mode**, all (displayable) characters are appended to the line buffer.
-The line buffer also has size 4, so if more characters are fed, it also scrolls, but without a delay.
+The line buffer also has size 4, so if more characters are fed, it also scrolls, but without a delay and not visible.
 The host needs to send a LINE-COMMIT (`\n`) to copy the line buffer to the frame buffer.
 
 The device has a limited reception buffer. Care should be taken not too send too many characters from the host.
@@ -114,7 +114,7 @@ The control character SET-FONT sets the font used for new incoming characters.
 
 The font is selected with the next byte, the font **id**.
 The device supports two fonts: 0 selects _unique7s_ and 1 _mimic7s_.
-Fonts: _mimic7s_ is optimized for readability and _unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
+Font _mimic7s_ is optimized for readability and _unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
 See the section on fonts for details.
 
 Note that the argument byte is taken "mod 2" so `\x00`, `0`, `U`, or `u` all select _unique7s_, and `\x01`, `1`, `M`, or `m` all select _mimic7s_.
@@ -144,7 +144,7 @@ For a display unit to blink the following settings need to be considered
 
 The **mask** is set with the argument byte, only the lower 4 bits are considered.
 When bit `i` from the mask is 1, unit `i` will blink - if blinking is globally enabled.
-When the bit is 0m unit `i` is on.
+When the bit is 0, unit `i` is (always) on.
 
 The default value is 0x0F or 15 or 0b1111 or all units blink.
 
@@ -162,7 +162,7 @@ The default values are 0x19 and 0x19, or 25 and 25 or 500 ms and 500 ms.
 
 ### 0x05 SHOW-STRINGS(id0,id1)
 The device has a list of internal values. Each value is given an id from 0 to 41.
-The control character SHOW-STRINGS will show a series of those values.
+The control character SHOW-STRINGS will show a series of those values on the display.
 
 This control character requires two argument bytes **id0** and **id1**.
 The control character SHOW-STRINGS will momentarily (2 sec per string) show the values from index **id0** up to (and including) index **id1**.
@@ -175,8 +175,13 @@ This command will not change the state, cursor position and frame buffer are lef
 
 ### 0x06 RESET
 The control character RESET will reset all settings to their default.
+This includes clear screen.
 
 The table at the start of this section shows the defaults (see last column).
+
+Note that on power-up, the device performs a reset
+but also prints its name (SSoS). 
+So a CLEAR-AND-HOME as a first command makes sense.
 
 ### 0x07 (`\a`) BLINK-ENABLE
 The control character BLINK-ENABLE globally enables blinking (see also BLINK-DISABLE).
@@ -197,7 +202,7 @@ See also CURSOR-LEFT and CURSOR-HOME.
 
 ### 0x0A (`\n`) LINE-COMMIT
 The control character LINE-COMMIT is ignored in character mode (CHAR_ENABLE).
-When line mode is enabled, an explicit LINE-COMMIT must be given to show line.
+When line mode is enabled, an explicit LINE-COMMIT must be given to show the line.
 See model section for description.
 
 By default character mode is enabled.
@@ -239,7 +244,7 @@ By default character mode is enabled.
 ### 0x11 CHAR-DISABLE
 Disables character mode (and thus enables line mode).
 
-The control character CHAR-DISABLE (disables character mode and thus) enables line mode (see CHAR-DISABLE). See Model section for details.
+The control character CHAR-DISABLE (disables character mode and thus) enables line mode. See Model section for details.
 When line mode is enabled, make sure to send a LINE-COMMIT (`\n`) at the end of each line.
 
 By default character mode is enabled.
@@ -251,20 +256,20 @@ The **time** is set with the argument byte, ranging from no delay (0) up to max 
 The argument may be 0, and the unit is steps of 20 ms.
 
 For a smooth scroll on an empty display (to be more precise, when the cursor is 0), 
-it is advised to start the message with 4 spaces, because the scroll delay is only applied when there is a scroll of a character.
+it is advised to start the message with 4 spaces, because the scroll delay is only applied when there is a _scroll_ of a character.
 
 The default value is 0x19, or 25, or 500 ms.
 
 ### 0x13 PATTERN-ONE(pat)                                                                                        
 The control character PATTERN-ONE adds a raw pattern to the display at the cursor position (instead of looking up a pattern from an ASCII value in the font).
 
-The **pat** is set with the argument byte, a bit mask indicating which segments to switch on. 
+The **pat** is passed with the argument byte, a bit mask indicating which segments to switch on. 
 Traditionally, the segments are labeled A-G (and P for the decimal point) in a clockwise fashion.
-The bits map to those segments in order:
+The bits of **pat** map to those segments in order:
 
 ![segments](segments.png)
 
-In other words, the character `7` typically has this pattern 0b00000111, so the argument byte would be 0x07.
+In other words, the character `1` typically switches on segments B and C, mapping to pattern 0b00000110, so the argument byte would be 0x06.
 
 This control sequence inserts a character in the flow, so it moves the cursor and optionally scrolls.
 
