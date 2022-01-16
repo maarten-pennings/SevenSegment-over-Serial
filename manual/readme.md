@@ -163,6 +163,7 @@ The default values are 0x19 and 0x19, or 25 and 25 or 500 ms and 500 ms.
 ### 0x05 SHOW-STRINGS(id0,id1)
 The device has a list of internal values. Each value is given an id from 0 to 41.
 The control character SHOW-STRINGS will show a series of those values on the display.
+This is typically a development/debug feature.
 
 This control character requires two argument bytes **id0** and **id1**.
 The control character SHOW-STRINGS will momentarily (2 sec per string) show the values from index **id0** up to (and including) index **id1**.
@@ -287,7 +288,8 @@ This is the font table for _unique7s_ (not the default font):
 
 ![unique7s](../font/unique7s_ascii.png)
 
-This is the font table for _mimic7s_ (the default font):
+This is the font table for _mimic7s_ (the default font).
+The cells with red marks have visual duplicates.
 
 ![mimic7s](../font/mimic7s_ascii.png)
 
@@ -317,9 +319,9 @@ The odd entries are the actual values, the even values just before them a 4 lett
  |   10  |   16  | `BL.en`                                           |
  |   11  |   17  | Blinking globally enabled, e.g. `0x00`            |
  |   12  |   18  | `BL.hi`                                           |
- |   13  |   19  | Blinking hi time, e.g. `0x019`                    |
+ |   13  |   19  | Blinking hi time, e.g. `0x19`                    |
  |   14  |   20  | `BL.lo`                                           |
- |   15  |   21  | Blinking lo time, e.g. `0x019`                    |
+ |   15  |   21  | Blinking lo time, e.g. `0x19`                    |
  |   16  |   22  | `BL.mk`                                           |
  |   17  |   23  | Blinking mask, e.g. `0x0F`                        |
  |   18  |   24  | `DSP.0`                                           |
