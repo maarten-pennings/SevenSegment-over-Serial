@@ -27,9 +27,14 @@ The ISR needs to support brightness control and blinking.
 
 ## Firmware
 The [firmware](firmware) for the Arduino Nano, the controller on the SSoS board.
-First some proof of concept sketches, finally the "end-product".
+First some proof of concept sketches, finally the [end-product](firmware/SSoS).
 
-## Enclosure 
+
+## User manual
+The [user manual](manual) for the [end-product](firmware/SSoS). is available.
+
+
+## LEGO enclosure 
 todo
 
 
