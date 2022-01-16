@@ -12,7 +12,7 @@ uint8_t app_fontid;
 uint8_t app_cursor;
 uint8_t app_dotenabled;
 uint8_t app_charenabled;
-uint8_t app_chartime10ms;
+uint8_t app_chartime20ms;
 
 
 // Reset the complete state (driver and app).
@@ -22,7 +22,7 @@ void app_reset() {
   app_cursor = 0;
   app_dotenabled = 1;
   app_charenabled = 1;
-  app_chartime10ms = 50;
+  app_chartime20ms = 0x19; // 25*20=500ms
 }
 
 
@@ -103,7 +103,7 @@ const char* app_int(uint8_t val) {
 
 
 // String table usable to display all known strings (versions, driver state, app state).
-#define APP_STRING_ID_COUNT 34
+#define APP_STRING_ID_COUNT 42
 const char* app_string(uint8_t id) {
   // App versions, compiler, date/time
   if( id== 0 ) return "APP";
@@ -138,31 +138,60 @@ const char* app_string(uint8_t id) {
   if( id==17 ) return app_int( drv7s_blinking_mode_get() );
 
   if( id==18 ) return "BL.hi";
-  if( id==19 ) return app_int( drv7s_blinking_hi_get()/5 - 1 );
+  if( id==19 ) return app_int( drv7s_blinking_hi_get() );
 
   if( id==20 ) return "BL.lo";
-  if( id==21 ) return app_int( drv7s_blinking_lo_get()/5 - 1 );
+  if( id==21 ) return app_int( drv7s_blinking_lo_get() );
 
   if( id==22 ) return "BL.mk";
   if( id==23 ) return app_int( drv7s_blinking_mask_get() );
 
+  if( id==24 ) return "DSP.0";
+  if( id==25 ) return app_int( drv7s_framebuf[0] );
+  
+  if( id==26 ) return "DSP.1";
+  if( id==27 ) return app_int( drv7s_framebuf[1] );
+
+  if( id==28 ) return "DSP.2";
+  if( id==29 ) return app_int( drv7s_framebuf[2] );
+
+  if( id==30 ) return "DSP.3";
+  if( id==31 ) return app_int( drv7s_framebuf[3] );
+
   // App state
-  if( id==24 ) return "FONT";
-  if( id==25 ) return app_int(app_fontid);
+  if( id==32 ) return "FONT";
+  if( id==33 ) return app_int(app_fontid);
   
-  if( id==26 ) return "CUR";
-  if( id==27 ) return app_int(app_cursor);
+  if( id==34 ) return "CUR";
+  if( id==35 ) return app_int(app_cursor);
   
-  if( id==28 ) return "DOT";
-  if( id==29 ) return app_int(app_dotenabled);
+  if( id==36 ) return "DOT";
+  if( id==37 ) return app_int(app_dotenabled);
 
-  if( id==30 ) return "CH.en";
-  if( id==31 ) return app_int(app_charenabled);
+  if( id==38 ) return "CH.en";
+  if( id==39 ) return app_int(app_charenabled);
 
-  if( id==32 ) return "CH.tm";
-  if( id==33 ) return app_int(app_chartime10ms);
+  if( id==40 ) return "CH.tm";
+  if( id==41 ) return app_int(app_chartime20ms);
 
   return " N.A.";
+}
+
+void app_show_strings(uint8_t id0, uint8_t id1) {
+  // Clip
+  if( id1>APP_STRING_ID_COUNT ) id1=APP_STRING_ID_COUNT-1;
+  Serial.println("Strings"); 
+  // Easy for debug
+  for( uint8_t i=0; i<APP_STRING_ID_COUNT; i+=2 ) {
+    Serial.print(" "); Serial.print(app_int(i)); Serial.print(" "); Serial.print(app_string(i)); Serial.print(" "); Serial.println( app_string(i+1) );
+  }
+  // Real feedback (backup and restore framebuffer)
+  uint8_t backup[DRV7S_UNITCOUNT];
+  memcpy(backup,drv7s_framebuf,DRV7S_UNITCOUNT);
+  for( uint8_t id=id0; id<=id1; id++ ) { 
+    app_putchars( app_string(id) ); delay(2000); 
+  }
+  memcpy(drv7s_framebuf,backup,DRV7S_UNITCOUNT);
 }
 
 
@@ -172,39 +201,39 @@ const char* app_string(uint8_t id) {
 // A length of 0 indicates not-a-command, 1 indicates command-without-args, 2 indicates command-with-one byte arg, etc
 // The table also shows the defaults (DFLT column), and actual ascii value in HEX/DEC/NAME/KEY and DESCRIPTION/
 uint8_t app_cmd_len[0x20] = { 
-//LEN     COMMAND                  DFLT  HEX DEC NAME KEY ESC DESCRIPTION
-    0, // ignored                         00   0  NUL  ^@  \0 Null
-    2, // SET-FONT(0..1)             01   01   1  SOH  ^A     Start of Heading
-    2, // SET-BRIGHTNESS(1..4)       03   02   2  STX  ^B     Start of Text
-    2, // SET-BLINK-MASK(0..15)      0F   03   3  ETX  ^C     End of Text
-    2, // SET-BLINK-TIMES(0..F|0..F) 55   04   4  EOT  ^D     End of Transmission
-    3, // SHOW-STRINGS(from,to)      -    05   5  ENQ  ^E     Enquiry
-    1, // RESET                      -    06   6  ACK  ^F     Acknowledgment
-    1, // BLINK-ENABLE              (0B)  07   7  BEL  ^G  \a Bell (beep or the flash)
-    1, // CURSOR-LEFT                -    08   8  BS   ^H  \b Backspace
-    1, // CURSOR-RIGHT               -    09   9  HT   ^I  \t Horizontal Tab
-    1, // LINE-COMMIT                -    0A  10  LF   ^J  \n Line Feed (moves line down)
-    1, // BLINK-DISABLE              yes  0B  11  VT   ^K  \v Vertical Tab
-    1, // CLEAR-AND-HOME             yes  0C  12  FF   ^L  \f Form Feed (clear the screen)
-    1, // CURSOR-HOME                -    0D  13  CR   ^M  \r Carriage Return (start of line)
-    1, // DOT-DISABLE               (0F)  0E  14  SO   ^N     Shift Out
-    1, // DOT-ENABLE                 yes  0F  15  SI   ^O     Shift In
-    1, // CHAR-ENABLE                yes  10  16  DLE  ^P     Data Link Escape
-    1, // CHAR-DISABLE              (10)  11  17  DC1  ^Q     Device Control 1 (often XON)
-    2, // CHAR-TIME                  50   12  18  DC2  ^R     Device Control 2
-    2, // PATTERN-ONE(pat)           -    13  19  DC3  ^S     Device Control 3 (often XOFF)
-    5, // PATTERN-ALL(p0,p1,p2,p3)   -    14  20  DC4  ^T     Device Control 4
-    0, // ignored                         15  21  NAK  ^U     Negative Acknowledgment
-    0, // ignored                         16  22  SYN  ^V     Synchronous Idle
-    0, // ignored                         17  23  ETB  ^W     End of Transmission Block
-    0, // ignored                         18  24  CAN  ^X     Cancel
-    0, // ignored                         19  25  EM   ^Y     End of Medium
-    0, // ignored                         1A  26  SUB  ^Z     Substitute (windows: end-of-file)
-    0, // ignored                         1B  27  ESC  ^[  \e Escape (start of sequence)
-    0, // ignored                         1C  28  FS   ^\     File Separator
-    0, // ignored                         1D  29  GS   ^]     Group Separator
-    0, // ignored                         1E  30  RS   ^^     Record Separator
-    0, // ignored                         1F  31  US   ^_     Unit Separator
+//LEN     COMMAND                        DFLT HEX DEC NAME KEY ESC DESCRIPTION
+    0, // ignored                              00   0  NUL  ^@  \0 Null
+    2, // SET-FONT(0..1)                   01  01   1  SOH  ^A     Start of Heading
+    2, // SET-BRIGHTNESS(1..5)             03  02   2  STX  ^B     Start of Text
+    2, // SET-BLINK-MASK(0..F)             0F  03   3  ETX  ^C     End of Text
+    3, // SET-BLINK-TIMES(0..FF,0..FF)  19,19  04   4  EOT  ^D     End of Transmission
+    3, // SHOW-STRINGS(from,to)             -  05   5  ENQ  ^E     Enquiry
+    1, // RESET                             -  06   6  ACK  ^F     Acknowledgment
+    1, // BLINK-ENABLE                 see#0B  07   7  BEL  ^G  \a Bell (beep or the flash)
+    1, // CURSOR-LEFT                       -  08   8  BS   ^H  \b Backspace
+    1, // CURSOR-RIGHT                      -  09   9  HT   ^I  \t Horizontal Tab
+    1, // LINE-COMMIT                       -  0A  10  LF   ^J  \n Line Feed (moves line down)
+    1, // BLINK-DISABLE                   yes  0B  11  VT   ^K  \v Vertical Tab
+    1, // CLEAR-AND-HOME                  yes  0C  12  FF   ^L  \f Form Feed (clear the screen)
+    1, // CURSOR-HOME                       -  0D  13  CR   ^M  \r Carriage Return (start of line)
+    1, // DOT-DISABLE                  see#0F  0E  14  SO   ^N     Shift Out
+    1, // DOT-ENABLE                      yes  0F  15  SI   ^O     Shift In
+    1, // CHAR-ENABLE                     yes  10  16  DLE  ^P     Data Link Escape
+    1, // CHAR-DISABLE                 see#10  11  17  DC1  ^Q     Device Control 1 (often XON)
+    2, // CHAR-TIME                        19  12  18  DC2  ^R     Device Control 2
+    2, // PATTERN-ONE(pat)                  -  13  19  DC3  ^S     Device Control 3 (often XOFF)
+    5, // PATTERN-ALL(p0,p1,p2,p3)          -  14  20  DC4  ^T     Device Control 4
+    0, // ignored                              15  21  NAK  ^U     Negative Acknowledgment
+    0, // ignored                              16  22  SYN  ^V     Synchronous Idle
+    0, // ignored                              17  23  ETB  ^W     End of Transmission Block
+    0, // ignored                              18  24  CAN  ^X     Cancel
+    0, // ignored                              19  25  EM   ^Y     End of Medium
+    0, // ignored                              1A  26  SUB  ^Z     Substitute (windows: end-of-file)
+    0, // ignored                              1B  27  ESC  ^[  \e Escape (start of sequence)
+    0, // ignored                              1C  28  FS   ^\     File Separator
+    0, // ignored                              1D  29  GS   ^]     Group Separator
+    0, // ignored                              1E  30  RS   ^^     Record Separator
+    0, // ignored                              1F  31  US   ^_     Unit Separator
 };
 
 
@@ -216,25 +245,13 @@ void app_cmd_exec(uint8_t * argv ) {
   if(         cmd==0x01 ) { // 2, SET-FONT
     app_fontid = argv[1] % 2;
   } else  if( cmd==0x02 ) { // 2, SET-BRIGHTNESS
-    uint8_t val = constrain( argv[1]%16, 1, DRV7S_SLOTCOUNT); // This allows \x01,1,A,a all act as brightness 1
-    drv7s_brightness_set( val );
+    drv7s_brightness_set( argv[1]%16 ); // %16 allows \x01,1,A,a all act as brightness 1
   } else  if( cmd==0x03 ) { // 2, SET-BLINK-MASK
     drv7s_blinking_mask_set(argv[1]%16);
   } else  if( cmd==0x04 ) { // 2, SET-BLINK-TIMES
-    uint8_t hi = (argv[1]>>4) + 1;
-    uint8_t lo = (argv[1]&0x0F) + 1;
-    drv7s_blinking_hilo_set(hi*5,lo*5);
+    drv7s_blinking_hilo_set(argv[1],argv[2]);
   } else  if( cmd==0x05 ) { // 3, SHOW-STRINGS
-    uint8_t id0 = argv[1];
-    uint8_t id1 = argv[2];
-    if( id1>APP_STRING_ID_COUNT ) id1=APP_STRING_ID_COUNT-1;
-    Serial.println("Strings"); 
-    for( uint8_t i=0; i<APP_STRING_ID_COUNT; i+=2 ) {
-      Serial.print(" "); Serial.print(i); Serial.print(" "); Serial.print( app_string(i) ); Serial.print(" "); Serial.println( app_string(i+1) );
-    }
-    for( uint8_t id=id0; id<=id1; id++ ) { 
-      app_putchars( app_string(id) ); delay(2000); 
-    }
+    app_show_strings(argv[1],argv[2]);
   } else  if( cmd==0x06 ) { // 1, RESET
     app_reset();
   } else  if( cmd==0x07 ) { // 1, BLINK-ENABLE
@@ -261,7 +278,7 @@ void app_cmd_exec(uint8_t * argv ) {
   } else  if( cmd==0x11 ) { // 1, CHAR-DISABLE
     app_charenabled = 0;
   } else  if( cmd==0x12 ) { // 2, CHAR-TIME
-    app_chartime10ms = argv[1];
+    app_chartime20ms = argv[1];
   } else  if( cmd==0x13 ) { // 2, PATTERN-ONE
     // Spec-point: inserts a "raw" character so moves cursor
     app_putpattern( argv[1] );  
