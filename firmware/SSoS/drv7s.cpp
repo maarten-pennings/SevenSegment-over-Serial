@@ -28,17 +28,17 @@ void drv7s_reset() {
   drv7s_unit       = DRV7S_UNITCOUNT-1;     // First ISR will roll over to unit 0  
   drv7s_frame      = drv7s_framecount-1;    // First ISR will roll over to frame 0  
 
-  drv7s_brightness = DRV7S_SLOTCOUNT-1;     // Brightness to 4/5
+  drv7s_brightness = 4;                     // Brightness to 4/5
 
   drv7s_alwayshi   = 1;                     // blinking disabled
-  drv7s_framecount = 50;                    // 1000 ms (1 frame is 20ms)
-  drv7s_frameshi   = 25;                    //  500 ms
+  drv7s_framecount = 0x32;                  // 0x32*20 = 50*20 = 1000 ms (1 frame is 20ms)
+  drv7s_frameshi   = 0x19;                  // 0x19*20 = 25*20 =  500 ms (1 frame is 20ms)
   drv7s_noblinkmask= 0;                     // all units blink
 }
 
-// Sets the brightness level to `val`, iff 1<=val<=DRV7S_SLOTCOUNT.
+// Sets the brightness level to `val`, constraining to [1,DRV7S_SLOTCOUNT], default 4.
 void drv7s_brightness_set( uint8_t val ) {
-  if( 1<=val && val<=DRV7S_SLOTCOUNT ) drv7s_brightness = val;
+  drv7s_brightness = constrain(val,1,DRV7S_SLOTCOUNT);
 }
 
 // Returns current brightness level.
@@ -46,7 +46,7 @@ uint8_t drv7s_brightness_get(  ) {
   return drv7s_brightness;
 }
 
-// Sets the blinking mode to `enabled` (0 is disabled, otherwise enabled).
+// Sets the blinking mode to `enabled` (0 is disabled, otherwise enabled), default disabled.
 void drv7s_blinking_mode_set( uint8_t enabled ) {
   drv7s_alwayshi = enabled==0; 
 }
@@ -56,10 +56,13 @@ uint8_t drv7s_blinking_mode_get(  ) {
   return ! drv7s_alwayshi;
 }
 
-// Sets the blinking to `hi` frames "on", then `lo` frames "off", iff hi>=1 and lo>=1 and hi+lo<255.
+// Sets the blinking to `hi` frames "on", then `lo` frames "off", constraining each to [1,254] and lo such that hi+lo<256, default 0x19,0x19.
 void drv7s_blinking_hilo_set( uint8_t hi, uint8_t lo ) {
+  hi = constrain(hi,1,254); // min is 1 so there is some hi, max is 254 so there is room for lo
+  lo = constrain(lo,1,254); // min is 1 so there is some lo, max is 254 so there is room for hi
   uint8_t sum = hi+lo; // prepare to check for overflow
-  if( hi>=1 && lo>=1 && sum>=hi ) { drv7s_framecount=sum; drv7s_frameshi=hi; }
+  if( sum>hi ) drv7s_framecount=sum; else drv7s_framecount=255; 
+  drv7s_frameshi = hi;
 }
 
 // Returns current blinking hi time (in frames).
@@ -72,7 +75,7 @@ uint8_t drv7s_blinking_lo_get(  ) {
   return drv7s_framecount - drv7s_frameshi;
 }
 
-// Sets the blinking mask: if bit i is set, unit i will blink. Only uses lower DRV7S_UNITCOUNT bits.
+// Sets the blinking mask: if bit i is set, unit i will blink. Only uses lower DRV7S_UNITCOUNT bits, default 0b1111 (all units blink).
 void drv7s_blinking_mask_set( uint8_t mask ) {
   drv7s_noblinkmask = ~mask; 
 }
@@ -154,3 +157,28 @@ void drv7s_setup() {
   TIMSK2 = 1 << OCIE2A;
   interrupts(); // Re-enable all interrupts - sei()
 }
+
+// Test code
+//  uint8_t val;
+//  Serial.println("drv7s_brightness_set/get");
+//  val=0; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=1; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=2; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=3; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=4; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=5; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=6; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//  val=9; drv7s_brightness_set(val); Serial.print(val); Serial.print(" "); Serial.print(drv7s_brightness_get()); Serial.println();
+//
+//  uint8_t hi,lo;
+//  Serial.println("drv7s_blinking_hi/lo_get/get");
+//  hi=  0; lo=  0; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=  1; lo=  0; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=  0; lo=  1; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=  3; lo=  8; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=  8; lo=  3; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=200; lo=100; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=100; lo=200; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=255; lo=  1; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=  1; lo=255; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
+//  hi=255; lo=255; drv7s_blinking_hilo_set(hi,lo); Serial.print(hi); Serial.print(" "); Serial.print(lo); Serial.print(" "); Serial.print(drv7s_blinking_hi_get()); Serial.print(" "); Serial.print(drv7s_blinking_lo_get()); Serial.println();
