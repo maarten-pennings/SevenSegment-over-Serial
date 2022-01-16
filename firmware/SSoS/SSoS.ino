@@ -1,10 +1,17 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "4.1"
+#define APP_VERSION  "5.0"
+#define APP_WAIT_MS  2000
+
 
 #include "drv7s.h"
 #include "font.h"
+
+
+////////////////////////////////////////////////////////////
+// State maintained by the app
+////////////////////////////////////////////////////////////
 
 
 // State introduced by the app (driver also has some).
@@ -26,29 +33,62 @@ void app_reset() {
 }
 
 
-// This is the "print to 7-segment", filling the framebuffer exposed by drv7s.
+////////////////////////////////////////////////////////////
+// Printing (updating display via driver)
+////////////////////////////////////////////////////////////
+
+
+// For char mode (if app_charenabled) function app_putpattern() puts to the real drv7s_framebuf[].
+// For line mode (if not app_charenabled) function app_putpattern() puts to the app_linebuf[], 
+// a \n is needed to commit (copy app_linebuf[] to drv7s_framebuf[]).
+uint8_t app_linebuf[DRV7S_UNITCOUNT];
+
+
+// This is the "print to 7-segment", filling the framebuffer exposed by drv7s or the line buffer, depending on app_charenabled.
 // `pattern`is a 8-bit code telling which LEDs of the 7-segment must be switched on (bit-0=segment-a, bit-1=segment-b, etc).
 // The segment is identified by `app_cursor`. 
 // If the cursor is beyond the display, the display is first shifted one position ("scroll").
 void app_putpattern(uint8_t pattern) {
+  uint8_t * buf = app_charenabled ? drv7s_framebuf : app_linebuf;
+  uint8_t wait = 0;
   // Shift display if cursor is at end
   if( app_cursor>=DRV7S_UNITCOUNT ) {
-    for( uint8_t i=1; i<DRV7S_UNITCOUNT; i++ ) drv7s_framebuf[i-1] = drv7s_framebuf[i];
+    for( uint8_t i=1; i<DRV7S_UNITCOUNT; i++ ) buf[i-1] = buf[i];
     app_cursor = DRV7S_UNITCOUNT-1;
+    wait = app_charenabled;
   } 
   // Determine pattern: lookup font
   // Write to driver
-  drv7s_framebuf[app_cursor] = pattern;
+  buf[app_cursor] = pattern;
   // Advance cursor
   app_cursor++;
+  // In charmode, wait when there was a scroll
+  if( wait ) delay(app_chartime20ms*20);
 }
 
 
 // Makes the dot or p-segment light up (of the character just before cursor).
 void app_putdot( ) {
   if( app_cursor>0 ) {
-    drv7s_framebuf[app_cursor-1] |= 0x80;    
+    uint8_t * buf = app_charenabled ? drv7s_framebuf : app_linebuf;
+    buf[app_cursor-1] |= 0x80;    
   }
+}
+
+
+// Used in line mode to copy the linebuffer to the framebuffer
+void app_commit_line() {
+  memcpy(drv7s_framebuf,app_linebuf,DRV7S_UNITCOUNT);
+  memset(app_linebuf,0,DRV7S_UNITCOUNT);
+  app_cursor = 0;
+}
+
+
+// Clears the screen and homes the cursor
+void app_clear_home() {
+  memset(drv7s_framebuf,0,DRV7S_UNITCOUNT); // clear 7-segments
+  memset(app_linebuf,0,DRV7S_UNITCOUNT); // clear line buffer
+  app_cursor = 0;
 }
 
 
@@ -71,6 +111,11 @@ void app_putchars(const char *chars) {
     i++;
   }
 }
+
+
+////////////////////////////////////////////////////////////
+// Support SHOW-STRING
+////////////////////////////////////////////////////////////
 
 
 // Returns chars s[p1..p2), but any `dot` character is replaced by a dot. Truncates at DRV7S_UNITCOUNT.
@@ -189,10 +234,15 @@ void app_show_strings(uint8_t id0, uint8_t id1) {
   uint8_t backup[DRV7S_UNITCOUNT];
   memcpy(backup,drv7s_framebuf,DRV7S_UNITCOUNT);
   for( uint8_t id=id0; id<=id1; id++ ) { 
-    app_putchars( app_string(id) ); delay(2000); 
+    app_putchars( app_string(id) ); delay(APP_WAIT_MS); 
   }
   memcpy(drv7s_framebuf,backup,DRV7S_UNITCOUNT);
 }
+
+
+////////////////////////////////////////////////////////////
+// Handling characters that are commands (with arguments)
+////////////////////////////////////////////////////////////
 
 
 // Some chars below 0x20 are "commands" (eg BLINK-ENABLE).
@@ -237,56 +287,60 @@ uint8_t app_cmd_len[0x20] = {
 };
 
 
-// Actual command in argv[0].
+// Actual command is in argv[0].
 // Rest of arguments for that command (as specified in app_cmd_len[]) is available in rest of argv[].
 // If app_cmd_len[ch]==0, this function will not be called with argv[0]==ch.
 void app_cmd_exec(uint8_t * argv ) {
   uint8_t cmd = argv[0];
-  if(         cmd==0x01 ) { // 2, SET-FONT
+  if(         cmd==0x01 ) { // SET-FONT (0x01/1 + font_id)
     app_fontid = argv[1] % 2;
-  } else  if( cmd==0x02 ) { // 2, SET-BRIGHTNESS
+  } else  if( cmd==0x02 ) { // SET-BRIGHTNESS (0x02/2 + brightness_level)
     drv7s_brightness_set( argv[1]%16 ); // %16 allows \x01,1,A,a all act as brightness 1
-  } else  if( cmd==0x03 ) { // 2, SET-BLINK-MASK
+  } else  if( cmd==0x03 ) { // SET-BLINK-MASK (0x03/3 + blink_mask)
     drv7s_blinking_mask_set(argv[1]%16);
-  } else  if( cmd==0x04 ) { // 2, SET-BLINK-TIMES
+  } else  if( cmd==0x04 ) { // SET-BLINK-TIMES (0x04/4 + hitime + lotime)
     drv7s_blinking_hilo_set(argv[1],argv[2]);
-  } else  if( cmd==0x05 ) { // 3, SHOW-STRINGS
+  } else  if( cmd==0x05 ) { // SHOW-STRINGS (0x05/5 + from_index + to_index)
     app_show_strings(argv[1],argv[2]);
-  } else  if( cmd==0x06 ) { // 1, RESET
+  } else  if( cmd==0x06 ) { // RESET (0x06/6)
     app_reset();
-  } else  if( cmd==0x07 ) { // 1, BLINK-ENABLE
+  } else  if( cmd==0x07 ) { // BLINK-ENABLE (0x07/7/\a)
     drv7s_blinking_mode_set(1);
-  } else  if( cmd==0x08 ) { // 1, CURSOR-LEFT
+  } else  if( cmd==0x08 ) { // CURSOR-LEFT (0x08/8/\b)
     if( app_cursor>0 ) app_cursor--;
-  } else  if( cmd==0x09 ) { // 1, CURSOR-RIGHT
+  } else  if( cmd==0x09 ) { // CURSOR-RIGHT (0x09/9/\t)
     if( app_cursor<DRV7S_UNITCOUNT ) app_cursor++;
-  } else  if( cmd==0x0A ) { // 1, LINE-COMMIT
-    Serial.println( "todo LINE-COMMIT");
-  } else  if( cmd==0x0B ) { // 1, BLINK-DISABLE
+  } else  if( cmd==0x0A ) { // LINE-COMMIT (0x0A/10/\n)
+    if( !app_charenabled ) app_commit_line();
+  } else  if( cmd==0x0B ) { // BLINK-DISABLE (0x0B/11/\v)
     drv7s_blinking_mode_set(0);
-  } else  if( cmd==0x0C ) { // 1, CLEAR-AND-HOME
-    memset(drv7s_framebuf,0,DRV7S_UNITCOUNT); // clear screen
+  } else  if( cmd==0x0C ) { // CLEAR-AND-HOME (0x0C/12/\f)
+    app_clear_home();
+  } else  if( cmd==0x0D ) { // CURSOR-HOME (0x0D/13/\r)
     app_cursor = 0; // cursor home
-  } else  if( cmd==0x0D ) { // 1, CURSOR-HOME
-    app_cursor = 0; // cursor home
-  } else  if( cmd==0x0E ) { // 1, DOT-DISABLE
+  } else  if( cmd==0x0E ) { // DOT-DISABLE (0x0E/14)
     app_dotenabled = 0;
-  } else  if( cmd==0x0F ) { // 1, DOT-ENABLE
+  } else  if( cmd==0x0F ) { // DOT-ENABLE (0x0F/15)
     app_dotenabled = 1;
-  } else  if( cmd==0x10 ) { // 1, CHAR-ENABLE
+  } else  if( cmd==0x10 ) { // CHAR-ENABLE (0x10/16)
     app_charenabled = 1;
-  } else  if( cmd==0x11 ) { // 1, CHAR-DISABLE
+  } else  if( cmd==0x11 ) { // CHAR-DISABLE (0x11/17)
     app_charenabled = 0;
-  } else  if( cmd==0x12 ) { // 2, CHAR-TIME
+  } else  if( cmd==0x12 ) { // CHAR-TIME (0x12/18 + char_time)
     app_chartime20ms = argv[1];
-  } else  if( cmd==0x13 ) { // 2, PATTERN-ONE
+  } else  if( cmd==0x13 ) { // PATTERN-ONE (0x13/19 + pattern)
     // Spec-point: inserts a "raw" character so moves cursor
     app_putpattern( argv[1] );  
-  } else  if( cmd==0x14 ) { // 5, PATTERN-ALL
+  } else  if( cmd==0x14 ) { // PATTERN-ALL (0x14/20 + pattern + pattern + pattern + pattern)
     // Spec-point: fills display but does not change cusror
     for( uint8_t i=0; i<DRV7S_UNITCOUNT; i++ ) drv7s_framebuf[i] = argv[i+1];
   }
 }
+
+
+////////////////////////////////////////////////////////////
+// App setup and loop
+////////////////////////////////////////////////////////////
 
 
 // Enable Serial for incoming characters.
