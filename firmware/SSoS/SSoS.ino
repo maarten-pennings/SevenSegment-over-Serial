@@ -1,7 +1,7 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "5.0"
+#define APP_VERSION  "5.1"
 #define APP_WAIT_MS  2000
 
 
@@ -254,7 +254,7 @@ uint8_t app_cmd_len[0x20] = {
 //LEN     COMMAND                        DFLT HEX DEC NAME KEY ESC DESCRIPTION
     0, // ignored                              00   0  NUL  ^@  \0 Null
     2, // SET-FONT(0..1)                   01  01   1  SOH  ^A     Start of Heading
-    2, // SET-BRIGHTNESS(1..5)             03  02   2  STX  ^B     Start of Text
+    2, // SET-BRIGHTNESS(1..5)             04  02   2  STX  ^B     Start of Text
     2, // SET-BLINK-MASK(0..F)             0F  03   3  ETX  ^C     End of Text
     3, // SET-BLINK-TIMES(0..FF,0..FF)  19,19  04   4  EOT  ^D     End of Transmission
     3, // SHOW-STRINGS(from,to)             -  05   5  ENQ  ^E     Enquiry
