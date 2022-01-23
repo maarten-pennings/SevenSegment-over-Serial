@@ -18,10 +18,12 @@ Note that
  - the "power" LED is connected to the internal 5V rail;
  - a diode protects a USB host in case the Nano is inadvertently connected via `USB` and `+5V`;
  - according to the datasheet the operating voltage is 2.7V-5.5V for Atmel ATmega48/88/168.
+ - this means that we can use pin 27 `+5V` also as input, provided weer attach a _regulated_ power in the range 2.7V-5.5V.
 
 **Conclusion**
 We power the board by connecting pin 27 (`+5V`) to the external host.
-This is fine as long as the external host a "standard" regulated voltage (e.g. 3V3 or 5V). It also means that the logic pins, e.g. the incoming `RX` will have the host level.
+This is fine as long as the external host a "standard" regulated voltage (e.g. 3V3 or 5V). 
+It also means that the logic pins, e.g. the incoming `RX` will have the host level.
 
 
 ## Display control
