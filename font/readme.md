@@ -3,7 +3,7 @@
 The SSoS device contains a firmware with two fonts.
 This directory contains a Python project to tabulate the fonts.
 Actually two tables are generated, one mapping ASCII to 7-segment patterns,
-and one mapping 7-segment patterns ("SegBits") to ASCII.
+and one mapping 7-segment patterns to ASCII.
 The latter helps in identifying duplicates (e.g. 5 and S).
 
 
@@ -20,23 +20,23 @@ This is the ASCII table:
 This is a systematic overview of all 7-segment patterns.
 Note that unused patterns are green.
 
-![SegBits table](unique7s_segbits.png)
+![Patterns table](unique7s_pattern.png)
 
 
-## Mimic7s
+## LookAlike7s
 
-The second font is named _Mimic7s_. 
+The second font is named _LookAlike7s_. 
 It maps all ASCII characters to a 7-segment display. 
 The crucial design decision is each character is mapped to a 7-segment pattern that is as close as possible to what the character normally looks like. 
 The downside is that one pattern may be used for several characters (see 5, uppercase S and lowercase s).
 
 This is the ASCII table. Duplicates are shown in red.
   
-![ASCII table](mimic7s_ascii.png)
+![ASCII table](lookalike7s_ascii.png)
   
 This is a systematic overview of all 7-segment patterns:
 
-![SegBits table](mimic7s_segbits.png)
+![Patterns table](lookalike7s_pattern.png)
 
   
 ## Use the script

@@ -2,10 +2,11 @@
 
 
 # tables.py - Script creating a fonttable for a 7-segment display
+# 2022 jan 29  v4  Maarten Pennings  renamed mimic7s to lookalike7s
 # 2022 jan 04  v3  Maarten Pennings  Added mimic7s
 # 2022 jan 04  v2  Maarten Pennings  Added cross references to duplicates
 # 2022 jan 03  v1  Maarten Pennings  Created
-version = "v3"
+version = "v4"
 
 
 import os
@@ -79,8 +80,8 @@ div_7s_fgfree      = "green"
                    
 div_grid_a_hlen    = 56  # width of a cell in the ascii table
 div_grid_a_vlen    = 110 # height of a cell in the ascii table
-div_grid_s_hlen    = 75  # width of a cell in the segbits table
-div_grid_s_vlen    = 98 # height of a cell in the segbits table
+div_grid_s_hlen    = 75  # width of a cell in the patterns table
+div_grid_s_vlen    = 98 # height of a cell in the patterns table
 div_grid_hsep      = 1   # (horizontal) border thickness in both tables
 div_grid_vsep      = 1   # (vertical) border thickness in both tables
 div_grid_title     = 28  # height for title at bottom in both tables
@@ -212,7 +213,7 @@ font_unique7s = [
 ]
 
 
-font_mimic7s = [
+font_lookalike7s = [
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x0_
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, # padding for 0x1_
   # pgfedcba
@@ -356,41 +357,41 @@ def chrr(ascii) :
 
 
 # Draws a 7-segment at position `(x,y)` on `draw` using color `div_7s_bgcol` for inactive segments and color `fgcolor` for active segments.
-# A segment a,b,c,d,e,f,g,p is active if the corresponding bit is set in `segbits`.
-def draw_7s(draw,x,y,segbits,fgcolor) :
+# A segment a,b,c,d,e,f,g,p is active if the corresponding bit is set in `pattern`.
+def draw_7s(draw,x,y,pattern,fgcolor) :
   # draw.rectangle([x,y,x+width_7s,y+height_7s],fgcolor)
   # draw segment 'a'
   x0 = x + div_7s_vwidth + div_7s_xsep
   y0 = y
-  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_a else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if pattern & segment_a else div_7s_bgcol)
   # draw segment 'b'
   x0 = x + div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_b else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if pattern & segment_b else div_7s_bgcol)
   # draw segment 'c'
   x0 = x + div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_c else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if pattern & segment_c else div_7s_bgcol)
   # draw segment 'd'
   x0 = x + div_7s_vwidth + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_d else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if pattern & segment_d else div_7s_bgcol)
   # draw segment 'e'
   x0 = x 
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_e else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if pattern & segment_e else div_7s_bgcol)
   # draw segment 'f'
   x0 = x 
   y0 = y + div_7s_hwidth + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if segbits & segment_f else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_vlen-1],fgcolor if pattern & segment_f else div_7s_bgcol)
   # draw segment 'g'
   x0 = x + div_7s_vwidth + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_g else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_hlen-1,y0+div_7s_hwidth-1],fgcolor if pattern & segment_g else div_7s_bgcol)
   # draw segment 'P'
   x0 = x + div_7s_vwidth + div_7s_xsep + div_7s_hlen + div_7s_xsep + div_7s_vwidth + div_7s_xsep
   y0 = y + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep + div_7s_hwidth + div_7s_ysep + div_7s_vlen + div_7s_ysep
-  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_hwidth-1],fgcolor if segbits & segment_p else div_7s_bgcol)
+  draw.rectangle([x0,y0,x0+div_7s_vwidth-1,y0+div_7s_hwidth-1],fgcolor if pattern & segment_p else div_7s_bgcol)
   
 
 def table_ascii(font7s,font7sname) :
@@ -422,9 +423,9 @@ def table_ascii(font7s,font7sname) :
       sizex,sizey= draw.textsize( label, font=mainfont)
       draw.text( (x1-sizex-4,y), label, div_hitext_color, font=mainfont)
       y += div_mainfont_size
-      # Draw the duplicate hex numbers: (hex numbers of) chars with same segbits
-      segbits = font7s[ascii]
-      otherchars = [_ascii for _ascii,_segbits in enumerate(font7s) if _ascii!=ascii and _segbits==segbits and _ascii>=32]
+      # Draw the duplicate hex numbers: (hex numbers of) chars with same pattern
+      pattern = font7s[ascii]
+      otherchars = [_ascii for _ascii,_pattern in enumerate(font7s) if _ascii!=ascii and _pattern==pattern and _ascii>=32]
       if len(otherchars)==0 : 
         label = "no"
         label2 = "duplicates"
@@ -442,9 +443,9 @@ def table_ascii(font7s,font7sname) :
       draw.text( (x0+(div_grid_a_hlen-sizex)//2,y), label, col, font=smallfont)
       y += div_smallfont_size+4
       # Draw the 7-segment
-      draw_7s( draw, x0+(div_grid_a_hlen-width_7s)//2, y, segbits, div_7s_fgcol )
-      # Draw the segbits
-      label = bin8(segbits)
+      draw_7s( draw, x0+(div_grid_a_hlen-width_7s)//2, y, pattern, div_7s_fgcol )
+      # Draw the pattern
+      label = bin8(pattern)
       sizex,sizey= draw.textsize( label, font=smallfont)
       draw.text( (x0+(div_grid_a_hlen-sizex)//2, y1-2-sizey), label, div_lotext_color, font=smallfont)
   # Draw title cell
@@ -458,7 +459,7 @@ def table_ascii(font7s,font7sname) :
   return image
 
 
-def table_segbits(font7s,font7sname) :
+def table_pattern(font7s,font7sname) :
   # Compute size for image to generate
   width  = 16*div_grid_s_hlen + (16+1)*div_grid_hsep
   height = 8*div_grid_s_vlen + (8+1)*div_grid_vsep       + div_grid_title + div_grid_vsep
@@ -474,18 +475,18 @@ def table_segbits(font7s,font7sname) :
     y1 = y0+div_grid_s_vlen-1
     for xx in range(16) :
       y = y0+1 # vertical cursor in cell
-      segbits = yy*div_grid_xcount+xx
+      pattern = yy*div_grid_xcount+xx
       # Draw the grid cell
       x0 = xx*(div_grid_s_hlen+div_grid_hsep) + div_grid_hsep
       x1 = x0+div_grid_s_hlen-1
       draw.rectangle([x0,y0,x1,y1],fill=div_grid_bgcol)
-      # Draw the segbits
-      label = bin8(segbits)
+      # Draw the pattern
+      label = bin8(pattern)
       sizex,sizey= draw.textsize( label, font=mediumfont)
       draw.text( (x0+(div_grid_s_hlen-sizex)//2, y), label, div_lotext_color, font=mediumfont)
       y += div_mediumfont_size+2
-      # Draw the duplicate hex numbers: (hex numbers of) chars with same segbits
-      chars = [_ascii for _ascii,_segbits in enumerate(font7s) if _segbits==segbits and _ascii>=32]
+      # Draw the duplicate hex numbers: (hex numbers of) chars with same pattern
+      chars = [_ascii for _ascii,_pattern in enumerate(font7s) if _pattern==pattern and _ascii>=32]
       if len(chars)==0 : 
         label = "not"
         label2 = "used"
@@ -505,13 +506,13 @@ def table_segbits(font7s,font7sname) :
       draw.text( (x0+(div_grid_s_hlen-sizex)//2,y), label, col_label, font=smallfont)
       y += div_smallfont_size+4
       # Draw the 7-segment
-      draw_7s( draw, x0+(div_grid_s_hlen-width_7s)//2, y, segbits, col_7s )
+      draw_7s( draw, x0+(div_grid_s_hlen-width_7s)//2, y, pattern, col_7s )
   # Draw title cell
   x0 = div_grid_hsep
   y0 = 8*(div_grid_s_vlen+div_grid_vsep) + div_grid_vsep
   draw.rectangle([x0,y0,x0+width-2*div_grid_hsep-1,y0+div_grid_title-1],fill=div_grid_bgcol)
   # Draw the title
-  label = f"SegBits table for font '{font7sname}'"
+  label = f"Pattern table for font '{font7sname}'"
   sizex,sizey= draw.textsize( label, font=mainfont)
   draw.text( ((width-sizex)/2,y0+(div_grid_title-sizey)/2+2), label, div_hitext_color, font=mainfont)
   return image
@@ -523,8 +524,8 @@ def main(font7s,font7sname) :
   filename = f"{font7sname}_ascii.png"
   image.save(filename)
   print( f"  saving {filename}")
-  image = table_segbits(font7s,font7sname)
-  filename = f"{font7sname}_segbits.png"
+  image = table_pattern(font7s,font7sname)
+  filename = f"{font7sname}_pattern.png"
   image.save(filename)
   print( f"  saving {filename}")
 
@@ -533,4 +534,4 @@ def main(font7s,font7sname) :
 if __name__ == "__main__":
   print( f"tables.py {version}")
   main(font_unique7s,"unique7s")
-  main(font_mimic7s,"mimic7s")
+  main(font_lookalike7s,"lookalike7s")
