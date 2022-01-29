@@ -8,7 +8,7 @@ This is the user manual of the "Seven Segment over Serial", also known by its sh
 The Seven Segment over Serial device consists of 4 seven segment displays controlled by a micro-controller (an Arduino Nano).
 It's key features are
 
- - Two built-in fonts: _mimic7s_ for optimal readability and _unique7s_ where characters have unique looks.
+ - Two built-in fonts: one for optimal readability and one where all characters have unique looks.
  - Support of brightness control and blinking.
  - Support for character mode (scrolling) and line mode (commit line at a time).
  - Control of cursor position (home, left, right, clear).
@@ -20,12 +20,45 @@ It's key features are
 ## Getting started
 
 Starting with SSoS is relatively easy. 
- - hook it up the a host (3V3,GND) and connect host TX to SSoS RX
+ - Hook it up the a host (3V3,GND) and connect host TX to SSoS RX
  - Configure UART on host as 8/N/115200.
- - Issue a write over serial: `Serial.print("\f    Hello, world!    ");`
+ - If the host powers or resets the board, make sure to wait 2 sec before sending commands (SSoS needs 2 seconds to boot).
+ - Issue a write over serial: 
+   ```python
+   write("\f    Hello, world!    ")
+   ```
+ - This should clear the screen (`\f`) and scroll in "Hello, World!" and scroll that out.
+   The `W` will be a bit hard to read (and maybe also the `!`)
 
-This should clear the screen (`\f`) and scroll in "Hello, World!" and scroll that out.
-The `W` will be a bit hard to read (and maybe also the `!`)
+
+## Examples
+
+Here are two examples of using SSoS via its USB port, connected to a PC, using Python to control SSoS.
+
+Simple example:
+
+```
+import serial
+import time
+
+ssos = serial.Serial('COM3',115200) # Resets board, so wait
+time.sleep(2)
+
+ssos.write( b'\0HI')
+```
+
+On a PC the DTR line causes a reset; if we pull it low, the boot is faster
+
+```python
+import serial
+
+ssos = serial.Serial(None,115200) # port=None, so not yet opened
+ssos.dtr = False # Makes sure the board does not reset (would take 2 seconds)
+ssos.port='COM3' # Specify port
+ssos.open()      # Now open (fast)
+
+ssos.write( b'\0BYE')
+```
 
 
 ## Model
@@ -42,10 +75,10 @@ the incoming character. The cursor remains at 4.
 When a character is received by the device, its ASCII value if first converted to a 7-segment **pattern**
 by looking it up in the current **font**. It is the pattern that is stored in the frame buffer.
 So changing the font does not alter the screen content that is already present.
-Two fonts are available _mimic7s_ for optimal readability and _unique7s_ where characters have unique looks. 
-For example, `dD5S` shows as follows (_mimic7s_ on the left, _unique7s_ on the right):
+Two fonts are available _LookAlike7s_ for optimal readability and _Unique7s_ where characters have unique looks. 
+For example, `dD5S` shows as follows (_LookAlike7s_ on the left, _Unique7s_ on the right):
 
-![enabled](mimic-dD5S.png) ![disabled](unique-dD5S.png)
+![dD5S with LookAlike7s](cmd0x01-lookalike.png) - ![dD5S with Unique7s](cmd0x01-unique.png)
 
 Note that the fonts only support ASCII. The 7-segment pattern associated by a **high "ASCII" value** `128+i`, 
 is the pattern associated with ASCII value `i` but with the (decimal) dot also switched on. Note that 
@@ -77,7 +110,7 @@ This is more likely in character mode than in line mode due to the delays in scr
 The device is also capable of showing the **dot** (`.`) on a 7-segment unit of its own or using the dot-segment of the previous 7-segment.
 For example `2.7` can show as on the left (DOT-ENABLE) or on the right (DOT-DISABLE).
 
-![enabled](dot2.7ena.png) ![disabled](dot2.7dis.png)
+![enabled](cmd0x0E-2.7.png) - ![disabled](cmd0x0E-2-7.png)
 
 
 
@@ -85,42 +118,93 @@ For example `2.7` can show as on the left (DOT-ENABLE) or on the right (DOT-DISA
 
 The below table gives an overview of all control characters ("commands"); details are in the subsections below.
 
- | HEX | DEC | NAME | KEY |C-ESC | ASCII description               | SSoS command                 |default (hex)|
- |:---:|:---:|:----:|:---:|:----:|:--------------------------------|:-----------------------------|------------:|
- |  01 |   1 |  SOH |  ^A |      | Start of Heading                | **SET-FONT(id)**             |          01 |  
- |  02 |   2 |  STX |  ^B |      | Start of Text                   | **SET-BRIGHTNESS(level)**    |          04 |  
- |  03 |   3 |  ETX |  ^C |      | End of Text                     | **SET-BLINK-MASK(mask)**     |          0F |  
- |  04 |   4 |  EOT |  ^D |      | End of Transmission             | **SET-BLINK-TIMES(hi,lo)**   |       19,19 |  
- |  05 |   5 |  ENQ |  ^E |      | Enquiry                         | **SHOW-STRINGS(id0,id1)**    |           - |  
- |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | **CURSOR-RIGHT**             |           - |  
- |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        | **BLINK-ENABLE**             |          no |  
- |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       | **CURSOR-LEFT**              |           - |  
- |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  | **CURSOR-EOLN**              |           - |  
- |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     | **LINE-COMMIT**              |           - |  
- |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    | **BLINK-DISABLE**            |         yes |  
- |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    | **CLEAR-AND-HOME**           |         yes |  
- |  0D |  13 |  CR  |  ^M | `\r` | Carriage Return (start of line) | **CURSOR-HOME**              |           - |  
- |  0E |  14 |  SO  |  ^N |      | Shift Out                       | **DOT-DISABLE**              |          no |  
- |  0F |  15 |  SI  |  ^O |      | Shift In                        | **DOT-ENABLE**               |         yes |  
- |  10 |  16 |  DLE |  ^P |      | Data Link Escape                | **CHAR-ENABLE**              |         yes |  
- |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    | **CHAR-DISABLE**             |          no |  
- |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | **CHAR-TIME(time)**          |          19 |  
- |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   | **PATTERN-ONE(pat)**         |           - |  
- |  14 |  20 |  DC4 |  ^T |      | Device Control 4                | **PATTERN-ALL(p0,p1,p2,p3)** |           - |  
- |  15 |  21 |  NAK |  ^U |      | Negative Acknowledgment         | **RESET**                    |           - |  
+ | HEX | DEC | NAME | KEY |C-ESC | ASCII description               || SSoS command             |default (hex)|
+ |:---:|:---:|:----:|:---:|:----:|:--------------------------------||:-------------------------|------------:|
+ |  00 |   0 |  NUL |  ^@ |  \0  | Null                            || RESET                    |           - |
+ |  01 |   1 |  SOH |  ^A |      | Start of Heading                || SET-FONT(id)             |          00 |  
+ |  02 |   2 |  STX |  ^B |      | Start of Text                   || SET-BRIGHTNESS(level)    |          04 |  
+ |  03 |   3 |  ETX |  ^C |      | End of Text                     || SET-BLINK-MASK(mask)     |          0F |  
+ |  04 |   4 |  EOT |  ^D |      | End of Transmission             || SET-BLINK-TIMES(hi,lo)   |       19,19 |  
+ |  05 |   5 |  ENQ |  ^E |      | Enquiry                         || SHOW-STRINGS(id0,id1)    |           - |  
+ |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  || CURSOR-RIGHT             |           - |  
+ |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        || BLINK-ENABLE             |          no |  
+ |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       || CURSOR-LEFT              |           - |  
+ |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  || CURSOR-EOLN              |           - |  
+ |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     || LINE-COMMIT              |           - |  
+ |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    || BLINK-DISABLE            |         yes |  
+ |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    || CLEAR-AND-HOME           |         yes |  
+ |  0D |  13 |  CR  |  ^M | `\r` | Carriage Return (start of line) || CURSOR-HOME              |           - |  
+ |  0E |  14 |  SO  |  ^N |      | Shift Out                       || DOT-DISABLE              |          no |  
+ |  0F |  15 |  SI  |  ^O |      | Shift In                        || DOT-ENABLE               |         yes |  
+ |  10 |  16 |  DLE |  ^P |      | Data Link Escape                || CHAR-ENABLE              |         yes |  
+ |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    || CHAR-DISABLE             |          no |  
+ |  12 |  18 |  DC2 |  ^R |      | Device Control 2                || CHAR-TIME(time)          |          19 |  
+ |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   || PATTERN-ONE(pat)         |           - |  
+ |  14 |  20 |  DC4 |  ^T |      | Device Control 4                || PATTERN-ALL(p0,p1,p2,p3) |           - |  
+
+
+
+### 0x00 RESET
+The control character RESET will reset all settings to their default.
+This includes clear screen and cursor home.
+
+The table at the start of this section shows the defaults (see last column).
+
+Note that on power-up, the device performs a reset
+but also prints its name (SSoS). 
+So a CLEAR-AND-HOME as a first command makes sense.
+
+#### Example
+
+```python
+  ssos.write( b'\0HI')
+  time.sleep(1)
+  ssos.write( b'\x0075')
+  time.sleep(1)
+```
+
+`\0HI` resets (clears screen, homes cursor) and prints HI.
+
+When using the escape sequence `\0` to reset, make sure not to append digits:
+`\075` does not reset and print `75`, it sends the octal character 075 (decimal 61) or `=`.
+In this case, use `\00075` (the `\000` is the RESET command in octal), or use hex (`\x0075`),
+or, a bit of a hack, write `\0.75` (SSoS will not print the `.` when there is no character).
+
+
+
 
 ### 0x01 SET-FONT(id)
 The control character SET-FONT sets the font used for new incoming characters.
 
 The font is selected with the next byte, the font **id**.
-The device supports two fonts: 0 selects _unique7s_ and 1 _mimic7s_.
-Font _mimic7s_ is optimized for readability and _unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
+The device supports two fonts: 0 selects _LookAlike7s_ and 1 _Unique7s_.
+Font _LookAlike7s_ is optimized for readability and _Unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
 See the section on fonts for details.
 
-Note that the argument byte is taken "mod 2" so `\x00`, `0`, `U`, or `u` all select _unique7s_, and `\x01`, `1`, `M`, or `m` all select _mimic7s_.
+Note that the argument byte is taken "mod 2" so `\x00`, `0`, `L`, or `l` all select _LookAlike7s_, and `\x01`, `1`, `U`, or `u` all select _Unique7s_.
 
-The default value is 0x01 or 1 or _mimic7s_.
+The default value is 0 or _LookAlike7s_.
 
+#### Example
+```python
+  ssos.write( b'\0dD5S')
+  time.sleep(1)
+  ssos.write( b'\0\1udD5S')
+  time.sleep(1)
+  ssos.write( b'\0S\x01US\x01LS')
+  time.sleep(1)
+```
+
+![dD5S default (LookAlike7s)](cmd0x01-lookalike.png) - ![dD5S Unique7s](cmd0x01-unique.png) - ![Both](cmd0x01-both.png)
+
+ - First example: after reset we have a readable font (LookAlike7s).
+ - Second example: `\1u` uses octal for command 1 and `u` as argument.
+ - Third example: `\x01U` uses hex for command 1 and `U` respectively `L` as argument.
+   Note that the fonts are used while "writing" changing the font afterwards does not change the looks of characters already written.
+
+
+
+ 
 ### 0x02 SET-BRIGHTNESS(level)
 The control character SET-BRIGHTNESS sets the brightness of the 7-segment units.
 
@@ -133,6 +217,28 @@ Note that the argument byte is taken "mod 16" so `\x01` has the same result as `
 Values lower than 1 are clipped to 1, values higher than 5 clipped to 5.
 
 The default value is 0x04 or 4/5 or 80%.
+
+#### Example
+
+```python
+  ssos.write( b'\0l=df')
+  time.sleep(1)
+  ssos.write( b'\0\x025l=5')
+  time.sleep(1)
+  ssos.write( b'\0\x024l=4')
+  time.sleep(1)
+  ssos.write( b'\0\x023l=3')
+  time.sleep(1)
+  ssos.write( b'\0\x023l=2')
+  time.sleep(1)
+  ssos.write( b'\0\x021l=1')
+  time.sleep(1)
+```
+
+As argument we pass a digit (eg `4`) instead of the byte (`\x04`). Both work.
+
+
+
 
 ### 0x03 SET-BLINK-MASK(mask)
 The control character SET-BLINK-MASK determines _which_ units blink when blinking is enabled.
@@ -148,6 +254,33 @@ When the bit is 0, unit `i` is (always) on.
 
 The default value is 0x0F or 15 or 0b1111 or all units blink.
 
+#### Example
+
+```python
+  ssos.write( b'\0ABCD')
+  time.sleep(3)
+  ssos.write( b'\a')
+  time.sleep(3)
+  ssos.write( b'\x03\x06')
+  time.sleep(3)
+  ssos.write( b'\x03\x09')
+  time.sleep(3)
+  ssos.write( b'\v')
+  time.sleep(3)
+```
+
+![After reset](cmd0x03-noblink.png) - ![blink enable](cmd0x03-1111.png) - ![blink middle](cmd0x03-0110.png) - ![blink sides](cmd0x03-1001.png) - ![blink disable](cmd0x03-noblink.png)
+
+- After reset the display is not blinking.
+- The default blink mask is 0b1111 (all units) and the default blink time is one second.
+  After `\a` (or `\x07`) all units start to blink 500ms on, 500ms off.
+- Mask 0x06 or 0b0110 is applied, so only middle two units blink.
+- Mask 0x09 or 0b1001 is applied, so only side units blink.
+- Command `\v` (or `\0x0b`) disables blinking.
+
+
+
+
 ### 0x04 SET-BLINK-TIMES(hi,lo)
 The control character SET-BLINK-TIMES determines the hi time (unit on) and lo time (unit off) when blinking is enabled.
 
@@ -159,6 +292,27 @@ The *lo* argument determines the unit off-time (in 20ms steps).
 Both arguments must be positive (not zero), and together they should be below 256.
 
 The default values are 0x19 and 0x19, or 25 and 25 or 500 ms and 500 ms.
+
+#### Example
+
+```python
+  ssos.write( b'\0\aABCD')
+  time.sleep(3)
+  ssos.write( b'\x04\x0A\x0A')
+  time.sleep(3)
+  ssos.write( b'\x04\x14\x05')
+  time.sleep(3)
+  ssos.write( b'\x04\x05\x14')
+  time.sleep(3)
+```
+
+- The `ABCD` are shown blinking 500ms on, 500ms off (1Hz).
+  This is after reset, so mask is 0b1111 (all digits).
+- Next the frequency is turned up to 200ms on and 200ms off (10×20ms), so 2.5Hz.
+- We switch back to 1Hz but a different duty cycle: 400ms on and 100ms off.
+- In the final step that is reversed 100ms on and 400ms off.
+
+
 
 ### 0x05 SHOW-STRINGS(id0,id1)
 The device has a list of internal values. Each value is given an id from 0 to 41.
@@ -174,10 +328,74 @@ Note `0x05 0x00 0xFF` will show all strings - since the `0xFF` will be clipped t
 
 This command will not change the state, cursor position and frame buffer are left unmodified once the command ends.
 
+#### Example
+
+```python
+  ssos.write( b'\0-8\x05\x18\x23')
+```
+
+- The example resets SSoS and puts `-8` on the screen.
+  Note that unit 0 has `-` or pattern 0b0100_000 or 0x40, unit 1 has pattern 0b0111_111 or 0x7F.
+  Note also that the cursor is at unit 2.
+- Next the example asks for strings 0x18 to 0x23.
+- We get the following strings on the device:
+  ```text
+  DSP.0 0x40
+  DSP.1 0x7F
+  DSP.2 0x00
+  DSP.3 0x00
+  FONT  0x00
+  CUR   0x02
+  ```
+- Note that display unit 0 has indeed 0x40, unit 1 has 0x7F and units 2 and 3 are blank (0x00).
+- Note that the cursor is 2.
+- When SHOW-STRINGS stops, the display is again `-8`.
+
+If you run this with a USB cable, the SSoS device sends all strings over UART to the host
+```text
+ 0x00 APP 5.4
+ 0x02 IDE 1.8.13
+ 0x04 CC 7.3.0 
+ 0x06 YEAR 2022
+ 0x08 Mnth Jan
+ 0x0A DAY 29
+ 0x0C TIME 22.17
+ 0x0E BRIT 0x04
+ 0x10 BL.en 0x00
+ 0x12 BL.hi 0x19
+ 0x14 BL.lo 0x19
+ 0x16 BL.mk 0x0F
+ 0x18 DSP.0 0x40
+ 0x1A DSP.1 0x7F
+ 0x1C DSP.2 0x00
+ 0x1E DSP.3 0x00
+ 0x20 FONT 0x00
+ 0x22 CUR 0x02
+ 0x24 DOT 0x01
+ 0x26 CH.en 0x01
+ 0x28 CH.tm 0x19
+```
+
 ### 0x06 CURSOR-RIGHT
 The control character CURSOR-RIGHT moves cursor right (if not already at after right-most position 4).
 
 See also CURSOR-LEFT, CURSOR-EOLN, and CURSOR-HOME.
+
+#### Example
+
+```python
+  ssos.write( b'\0')
+  time.sleep(1)
+  ssos.write( b'\x06A')
+  time.sleep(1)
+  ssos.write( b'\x06B')
+  time.sleep(1)
+```
+
+![Blank](demo0x06-blank.png) - ![cursor right A](demo0x06-A.png) - ![cursor right B](demo0x06-AB.png)
+
+
+
 
 ### 0x07 (`\a`) BLINK-ENABLE
 The control character BLINK-ENABLE globally enables blinking (see also BLINK-DISABLE).
@@ -186,16 +404,63 @@ See SET-BLINK-MASK for all blinking settings to be considered.
 
 By default global blinking is disabled.
 
+#### Example
+
+See "0x03 SET-BLINK-MASK(mask)".
+
+
+
+
 ### 0x08 (`\b`) CURSOR-LEFT
 The control character CURSOR-LEFT moves the cursor left (if not already at left-most position 0).
 
 See also CURSOR-RIGHT, CURSOR-EOLN, and CURSOR-HOME.
+
+#### Example
+
+```python
+  ssos.write( b'\0n=3')
+  time.sleep(1)
+  ssos.write( b'\b2')
+  time.sleep(1)
+  ssos.write( b'\b1')
+  time.sleep(1)
+  ssos.write( b'\x08 ')
+  time.sleep(1)
+```
+
+![n=3](demo0x08-n=3.png) - ![n=2](demo0x08-n=2.png) - ![n=1](demo0x08-n=1.png) - ![n=](demo0x08-n=.png)
+
+- After writing `n=3` the cursor backups and overwrites 3 with 2.
+- We use `\b` (backspace) as alternative for `\x08` (in the last command).
+- In the last command, the 1 is overwritten by a space.
+
+
+
 
 ### 0x09 (`\t`) CURSOR-EOLN
 The control character CURSOR-EOLN moves cursor to the right-most position (position 4).
 This is convenient for printing right aligned (e.g. numbers).
 
 See also CURSOR-LEFT, CURSOR-RIGHT, and CURSOR-HOME.
+
+#### Example
+
+```python
+  ssos.write( b'\0\t3.14')
+  time.sleep(3)
+  ssos.write( b'\0\x11\t2.7\n')
+  time.sleep(1)
+```
+
+![3.14](cmd0x09-3.14.png) - ![2.7](cmd0x09-2.7.png)
+
+- The `t` or `0x09` puts the cursor at position 4. The next characters `3.14` scroll in from the right.
+  The end result is a right-aligned number.
+- The scrolling is slow, so you might consider switching to line-mode, disabling character mode (`0x11`).
+  This does require to commit the line (`\n` or `0x0A`).
+
+
 
 ### 0x0A (`\n`) LINE-COMMIT
 The control character LINE-COMMIT is ignored in character mode (CHAR_ENABLE).
@@ -204,6 +469,34 @@ See model section for description.
 
 By default character mode is enabled.
 
+#### Example
+
+```python
+  ssos.write( b'\0character\n')
+  time.sleep(6)
+  ssos.write( b' mode')
+  time.sleep(2)
+  ssos.write( b'\x11')
+  time.sleep(1)
+  ssos.write( b'now line\n')
+  time.sleep(1)
+  ssos.write( b'yes')
+  time.sleep(3)
+  ssos.write( b'\n')
+```
+
+
+![character](cmd0x0A-cter.png) - ![mode](cmd0x0A-mode.png) - ![line](cmd0x0A-line.png) - ![line](cmd0x0A-line.png) - ![yes](cmd0x0A-yes.png)
+
+- After reset SSoS is in character mode.
+- `character` slowly scrolls in from right to left, the screen shows `cter`.
+- The `\n` from the previous command is ignored, so the ` mode` scrolls the `cter` to the left.
+- Switch to line mode `\x11` does nothing to the display.
+- `line` appears instantaneously: no scrolling (so the `now ` part is not seen).
+- The `yes` does not appear at first, there is no `\n` to commit that line.
+- Three seconds later the `yes` line is committed. Note that a `\n` also clears the line, so there is a blank after the `s` of `yes`.
+
+
 ### 0x0B (`\v`) BLINK-DISABLE
 The control character BLINK-DISABLE globally disables blinking (see also BLINK-ENABLE).
 
@@ -211,23 +504,109 @@ See SET-BLINK-MASK for all blinking settings to be considered.
 
 By default global blinking is disabled.
 
+#### Example
+
+See "0x03 SET-BLINK-MASK(mask)".
+
+
+
 ### 0x0C (`\f`) CLEAR-AND-HOME
 The control character CLEAR-AND-HOME clears the screen (i.e. the frame/line buffer) and homes the cursor.
+
+#### Example
+
+```python
+  ssos.write( b'\0a=1')
+  time.sleep(2)
+  ssos.write( b'b=2')
+  time.sleep(2)
+  ssos.write( b'\fc=3')
+  time.sleep(2)
+```
+
+![a=1](cmd0x0C-a=1.png) - ![b=2](cmd0x0C-b=2.png) - ![c=3](cmd0x0C-c=3.png)
+
+- The message `a=1` appears immediately on the screen.
+  The mode after reset is character mode, but since the message is not longer than the screen (3 versus 4) there is no scrolling.
+- The next write `b=2` scrolls out the `a=1`. This is not only slow, but also leave the `1` on the screen.
+- The final write shows the use of CLEAR-AND-HOME (`\f` or `\0x0C`): 
+  it clears the screen so `c=2` appears immediately on the screen, no scrolling, no left-overs.
+
+
+
 
 ### 0x0D (`\r`) CURSOR-HOME
 The control character CURSOR-HOME homes the cursor, i.e. sets it to 0. It does not clear screen.
 
 See also CURSOR-RIGHT, CURSOR-LEFT, and CURSOR-RIGHT.
 
+#### Example
+
+```python
+  ssos.write( b'\0 59')
+  time.sleep(2)
+  ssos.write( b'\r-')
+  time.sleep(2)
+```
+
+![a=1](cmd0x0D-_59.png) - ![b=2](cmd0x0D--59.png)
+
+- The leading space is replaced by a `-`.
+- We use `\r` as shorthand for `0x0D`.
+
+
+
 ### 0x0E DOT-DISABLE
 The control character DOT-DISABLE disables dot replacement. See Model section for details (see also DOT-ENABLE).
 
-By default dot is enabled.
+By default dot replacement is enabled.
+
+#### Example
+
+```python
+  ssos.write( b'\0')
+  time.sleep(2)
+  ssos.write( b'\f2.7')
+  time.sleep(2)
+  ssos.write( b'\f.E.F.G.H.')
+  time.sleep(2)
+  ssos.write( b'\x0E')
+  time.sleep(2)
+  ssos.write( b'\f2.7')
+  time.sleep(2)
+  ssos.write( b'\f.E.F.G.H.')
+  time.sleep(2)
+  ssos.write( b'\x0F')
+  time.sleep(2)
+  ssos.write( b'\f2.7')
+  time.sleep(2)
+```
+
+![2.7 (dot enabled)](cmd0x0E-2.7.png) - ![.E.F.G.H. (dot enabled)](cmd0x0E-.E.F.G.H..png) - ![2.7 (dot disabled)](cmd0x0E-2-7.png) - ![.E.F.G.H. (dot disabled)](cmd0x0E-G-H-.png) - ![2.7 (dot enabled)](cmd0x0E-2.7.png)
+
+- After reset mode is "dot replacement enabled". 
+  All `.` characters will be replaced by switching on the decimal point of the 7-segment unit.
+  Note that all writes start with a cleared display (`\f`).
+- So the dots in `2.7` and `.E.F.G.H.` get replaced (except the dot at the beginning of `.E.F.G.H.` - there is no previous character).
+- Next the mode changes to "dot replacement disabled" with command `0x0E`.
+  All `.` characters will be rendered in their own 7-segment unit.
+- The dots in `2.7` and `.E.F.G.H.` do not replaced. This makes `2.7` three units long.
+  It makes `.E.F.G.H.I.` nine units long, so that scrolls (after reset character mode is active).
+- The `0x0F` enabled dot replacement, so the `2.7` comes out with the decimal point.
+
+
+
 
 ### 0x0F DOT-ENABLE
-The control character DOT-DISABLE disables dot replacement. See Model section for details (see also DOT-DISABLE).
+The control character DOT-ENABLE enables dot replacement. See Model section for details (see also DOT-DISABLE).
 
-By default dot is enabled.
+By default dot replacement is enabled.
+
+#### Example
+
+See "0x0E DOT-DISABLE"
+
+
 
 ### 0x10 CHAR-ENABLE
 The control character CHAR-ENABLE enables character mode (as opposed to line mode, see CHAR-DISABLE). See Model section for details.
@@ -238,6 +617,14 @@ This will overflow the internal reception buffer, causing loss of received bytes
 
 By default character mode is enabled.
 
+#### Example
+
+```python
+```
+
+
+
+
 ### 0x11 CHAR-DISABLE
 Disables character mode (and thus enables line mode).
 
@@ -245,6 +632,14 @@ The control character CHAR-DISABLE (disables character mode and thus) enables li
 When line mode is enabled, make sure to send a LINE-COMMIT (`\n`) at the end of each line.
 
 By default character mode is enabled.
+
+#### Example
+
+```python
+```
+
+
+
 
 ### 0x12 CHAR-TIME(time)
 The control character CHAR-TIME sets the wait time per character scrolled.
@@ -256,6 +651,14 @@ For a smooth scroll on an empty display (to be more precise, when the cursor is 
 it is advised to start the message with 4 spaces, because the scroll delay is only applied when there is a _scroll_ of a character.
 
 The default value is 0x19, or 25, or 500 ms.
+
+#### Example
+
+```python
+```
+
+
+
 
 ### 0x13 PATTERN-ONE(pat)                                                                                        
 The control character PATTERN-ONE adds a raw pattern to the display at the cursor position (instead of looking up a pattern from an ASCII value in the font).
@@ -270,6 +673,14 @@ In other words, the character `1` typically switches on segments B and C, mappin
 
 This control sequence inserts a character in the flow, so it moves the cursor and optionally scrolls.
 
+#### Example
+
+```python
+```
+
+
+
+
 ### 0x14 PATTERN-ALL(p0,p1,p2,p3)                                                                                
 The control character PATTERN-ALL adds a raw pattern to the complete display (all 4 units).
 
@@ -277,27 +688,18 @@ The **p0**, **p1**, **p2**, and **p3** are the raw patterns for units 0 to 3 res
 
 This control sequence directly accesses the frame buffer; it does not use the cursor, nor the line buffer.
 
-### 0x21 RESET
-The control character RESET will reset all settings to their default.
-This includes clear screen.
-
-The table at the start of this section shows the defaults (see last column).
-
-Note that on power-up, the device performs a reset
-but also prints its name (SSoS). 
-So a CLEAR-AND-HOME as a first command makes sense.
 
 
 ## Fonts
 
-This is the font table for _unique7s_ (not the default font):
+This is the font table for _Unique7s_ (not the default font):
 
-![unique7s](../font/unique7s_ascii.png)
+![Unique7s](../font/unique7s_ascii.png)
 
-This is the font table for _mimic7s_ (the default font).
+This is the font table for _LookAlike7s_ (the default font).
 The cells with red marks have visual duplicates.
 
-![mimic7s](../font/mimic7s_ascii.png)
+![LookAlike7s](../font/lookalike7s_ascii.png)
 
 ## Strings
 
@@ -307,7 +709,7 @@ The odd entries are the actual values, the even values just before them a 4 lett
  |ID(hex)|ID(dec)| String                                            |
  |:-----:|:-----:|:--------------------------------------------------|
  |   00  |    0  | `APP`                                             |
- |   01  |    1  | SSoS app version e.g. `5.1`                       |
+ |   01  |    1  | SSoS app version e.g. `5.4`                       |
  |   02  |    2  | `IDE`                                             |
  |   03  |    3  | Arduino IDE version e.g. `1.8.13`                 |
  |   04  |    4  | `CC`                                              |
@@ -339,7 +741,7 @@ The odd entries are the actual values, the even values just before them a 4 lett
  |   1E  |   30  | `DSP.3`                                           |
  |   1F  |   31  | Content of display unit (frame buf) 3, e.g. `0x6D`|
  |   20  |   32  | `FONT`                                            |
- |   21  |   33  | Current font, e.g. `0x01`                         |
+ |   21  |   33  | Current font, e.g. `0x00`                         |
  |   22  |   34  | `CUR`                                             |
  |   23  |   35  | Current cursor position, e.g. `0x00`              |
  |   24  |   36  | `DOT`                                             |

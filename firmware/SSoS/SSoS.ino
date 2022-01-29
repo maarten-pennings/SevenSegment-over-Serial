@@ -1,7 +1,7 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "5.3"
+#define APP_VERSION  "5.4"
 #define APP_WAIT_MS  2000
 
 
@@ -25,7 +25,7 @@ uint8_t app_chartime20ms;
 // Reset the complete state (driver and app).
 void app_reset() {
   drv7s_reset(); // framebuf:0,0,0,0; brightness:4; blinking:disabled,25/25,0b0000
-  app_fontid = FONT_MIMIC7S; // FONT_UNIQUE7S;
+  app_fontid = FONT_LOOKALIKE7S; // FONT_UNIQUE7S;
   app_cursor = 0;
   app_dotenabled = 1;
   app_charenabled = 1;
@@ -148,6 +148,7 @@ const char* app_int(uint8_t val) {
 
 
 // String table usable to display all known strings (versions, driver state, app state).
+uint8_t app_framebuf_backup[DRV7S_UNITCOUNT];
 #define APP_STRING_ID_COUNT 42
 const char* app_string(uint8_t id) {
   // App versions, compiler, date/time
@@ -192,16 +193,16 @@ const char* app_string(uint8_t id) {
   if( id==23 ) return app_int( drv7s_blinking_mask_get() );
 
   if( id==24 ) return "DSP.0";
-  if( id==25 ) return app_int( drv7s_framebuf[0] );
+  if( id==25 ) return app_int( app_framebuf_backup[0] );
   
   if( id==26 ) return "DSP.1";
-  if( id==27 ) return app_int( drv7s_framebuf[1] );
+  if( id==27 ) return app_int( app_framebuf_backup[1] );
 
   if( id==28 ) return "DSP.2";
-  if( id==29 ) return app_int( drv7s_framebuf[2] );
+  if( id==29 ) return app_int( app_framebuf_backup[2] );
 
   if( id==30 ) return "DSP.3";
-  if( id==31 ) return app_int( drv7s_framebuf[3] );
+  if( id==31 ) return app_int( app_framebuf_backup[3] );
 
   // App state
   if( id==32 ) return "FONT";
@@ -225,18 +226,19 @@ const char* app_string(uint8_t id) {
 void app_show_strings(uint8_t id0, uint8_t id1) {
   // Clip
   if( id1>APP_STRING_ID_COUNT ) id1=APP_STRING_ID_COUNT-1;
+  // Backup display
+  memcpy(app_framebuf_backup,drv7s_framebuf,DRV7S_UNITCOUNT);
+  // Dump all to serial  
   Serial.println("Strings"); 
-  // Easy for debug
   for( uint8_t i=0; i<APP_STRING_ID_COUNT; i+=2 ) {
     Serial.print(" "); Serial.print(app_int(i)); Serial.print(" "); Serial.print(app_string(i)); Serial.print(" "); Serial.println( app_string(i+1) );
   }
-  // Real feedback (backup and restore framebuffer)
-  uint8_t backup[DRV7S_UNITCOUNT];
-  memcpy(backup,drv7s_framebuf,DRV7S_UNITCOUNT);
+  // Show requested on display
   for( uint8_t id=id0; id<=id1; id++ ) { 
     app_putchars( app_string(id) ); delay(APP_WAIT_MS); 
   }
-  memcpy(drv7s_framebuf,backup,DRV7S_UNITCOUNT);
+  // Restore framebuffer
+  memcpy(drv7s_framebuf,app_framebuf_backup,DRV7S_UNITCOUNT);
 }
 
 
@@ -252,7 +254,7 @@ void app_show_strings(uint8_t id0, uint8_t id1) {
 // The table also shows the defaults (DFLT column), and actual ascii value in HEX/DEC/NAME/KEY and DESCRIPTION/
 uint8_t app_cmd_len[0x20] = { 
 //LEN     COMMAND                        DFLT HEX DEC NAME KEY ESC DESCRIPTION
-    0, // ignored                              00   0  NUL  ^@  \0 Null
+    1, // RESET                                00   0  NUL  ^@  \0 Null
     2, // SET-FONT(0..1)                   01  01   1  SOH  ^A     Start of Heading
     2, // SET-BRIGHTNESS(1..5)             04  02   2  STX  ^B     Start of Text
     2, // SET-BLINK-MASK(0..F)             0F  03   3  ETX  ^C     End of Text
@@ -273,7 +275,7 @@ uint8_t app_cmd_len[0x20] = {
     2, // CHAR-TIME                        19  12  18  DC2  ^R     Device Control 2
     2, // PATTERN-ONE(pat)                  -  13  19  DC3  ^S     Device Control 3 (often XOFF)
     5, // PATTERN-ALL(p0,p1,p2,p3)          -  14  20  DC4  ^T     Device Control 4
-    1, // RESET                                15  21  NAK  ^U     Negative Acknowledgment
+    0, // ignored                              15  21  NAK  ^U     Negative Acknowledgment
     0, // ignored                              16  22  SYN  ^V     Synchronous Idle
     0, // ignored                              17  23  ETB  ^W     End of Transmission Block
     0, // ignored                              18  24  CAN  ^X     Cancel
@@ -292,7 +294,9 @@ uint8_t app_cmd_len[0x20] = {
 // If app_cmd_len[ch]==0, this function will not be called with argv[0]==ch.
 void app_cmd_exec(uint8_t * argv ) {
   uint8_t cmd = argv[0];
-  if(        cmd==0x01 ) { // SET-FONT (0x01/1 + font_id)
+  if(        cmd==0x00 ) { // RESET (0x00/0)
+    app_reset();
+  } else if( cmd==0x01 ) { // SET-FONT (0x01/1 + font_id)
     app_fontid = argv[1] % 2;
   } else if( cmd==0x02 ) { // SET-BRIGHTNESS (0x02/2 + brightness_level)
     drv7s_brightness_set( argv[1]%16 ); // %16 allows \x01,1,A,a all act as brightness 1
@@ -334,8 +338,6 @@ void app_cmd_exec(uint8_t * argv ) {
   } else if( cmd==0x14 ) { // PATTERN-ALL (0x14/20 + pattern + pattern + pattern + pattern)
     // Spec-point: fills display but does not change cusror
     for( uint8_t i=0; i<DRV7S_UNITCOUNT; i++ ) drv7s_framebuf[i] = argv[i+1];
-  } else if( cmd==0x15 ) { // RESET (0x15/20)
-    app_reset();
   }
 }
 
