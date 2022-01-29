@@ -92,10 +92,10 @@ The below table gives an overview of all control characters ("commands"); detail
  |  03 |   3 |  ETX |  ^C |      | End of Text                     | **SET-BLINK-MASK(mask)**     |          0F |  
  |  04 |   4 |  EOT |  ^D |      | End of Transmission             | **SET-BLINK-TIMES(hi,lo)**   |       19,19 |  
  |  05 |   5 |  ENQ |  ^E |      | Enquiry                         | **SHOW-STRINGS(id0,id1)**    |           - |  
- |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | **RESET**                    |           - |  
+ |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | **CURSOR-RIGHT**             |           - |  
  |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        | **BLINK-ENABLE**             |          no |  
  |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       | **CURSOR-LEFT**              |           - |  
- |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  | **CURSOR-RIGHT**             |           - |  
+ |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  | **CURSOR-EOLN**              |           - |  
  |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     | **LINE-COMMIT**              |           - |  
  |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    | **BLINK-DISABLE**            |         yes |  
  |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    | **CLEAR-AND-HOME**           |         yes |  
@@ -107,7 +107,7 @@ The below table gives an overview of all control characters ("commands"); detail
  |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | **CHAR-TIME(time)**          |          19 |  
  |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   | **PATTERN-ONE(pat)**         |           - |  
  |  14 |  20 |  DC4 |  ^T |      | Device Control 4                | **PATTERN-ALL(p0,p1,p2,p3)** |           - |  
-
+ |  15 |  21 |  NAK |  ^U |      | Negative Acknowledgment         | **RESET**                    |           - |  
 
 ### 0x01 SET-FONT(id)
 The control character SET-FONT sets the font used for new incoming characters.
@@ -174,15 +174,10 @@ Note `0x05 0x00 0xFF` will show all strings - since the `0xFF` will be clipped t
 
 This command will not change the state, cursor position and frame buffer are left unmodified once the command ends.
 
-### 0x06 RESET
-The control character RESET will reset all settings to their default.
-This includes clear screen.
+### 0x06 CURSOR-RIGHT
+The control character CURSOR-RIGHT moves cursor right (if not already at after right-most position 4).
 
-The table at the start of this section shows the defaults (see last column).
-
-Note that on power-up, the device performs a reset
-but also prints its name (SSoS). 
-So a CLEAR-AND-HOME as a first command makes sense.
+See also CURSOR-LEFT, CURSOR-EOLN, and CURSOR-HOME.
 
 ### 0x07 (`\a`) BLINK-ENABLE
 The control character BLINK-ENABLE globally enables blinking (see also BLINK-DISABLE).
@@ -194,12 +189,13 @@ By default global blinking is disabled.
 ### 0x08 (`\b`) CURSOR-LEFT
 The control character CURSOR-LEFT moves the cursor left (if not already at left-most position 0).
 
-See also CURSOR-RIGHT and CURSOR-HOME.
+See also CURSOR-RIGHT, CURSOR-EOLN, and CURSOR-HOME.
 
-### 0x09 (`\t`) CURSOR-RIGHT
-The control character CURSOR-RIGHT moves cursor right (if not already at after right-most position 4).
+### 0x09 (`\t`) CURSOR-EOLN
+The control character CURSOR-EOLN moves cursor to the right-most position (position 4).
+This is convenient for printing right aligned (e.g. numbers).
 
-See also CURSOR-LEFT and CURSOR-HOME.
+See also CURSOR-LEFT, CURSOR-RIGHT, and CURSOR-HOME.
 
 ### 0x0A (`\n`) LINE-COMMIT
 The control character LINE-COMMIT is ignored in character mode (CHAR_ENABLE).
@@ -221,7 +217,7 @@ The control character CLEAR-AND-HOME clears the screen (i.e. the frame/line buff
 ### 0x0D (`\r`) CURSOR-HOME
 The control character CURSOR-HOME homes the cursor, i.e. sets it to 0. It does not clear screen.
 
-See also CURSOR-LEFT and CURSOR-RIGHT.
+See also CURSOR-RIGHT, CURSOR-LEFT, and CURSOR-RIGHT.
 
 ### 0x0E DOT-DISABLE
 The control character DOT-DISABLE disables dot replacement. See Model section for details (see also DOT-ENABLE).
@@ -281,6 +277,16 @@ The **p0**, **p1**, **p2**, and **p3** are the raw patterns for units 0 to 3 res
 
 This control sequence directly accesses the frame buffer; it does not use the cursor, nor the line buffer.
 
+### 0x21 RESET
+The control character RESET will reset all settings to their default.
+This includes clear screen.
+
+The table at the start of this section shows the defaults (see last column).
+
+Note that on power-up, the device performs a reset
+but also prints its name (SSoS). 
+So a CLEAR-AND-HOME as a first command makes sense.
+
 
 ## Fonts
 
@@ -295,7 +301,7 @@ The cells with red marks have visual duplicates.
 
 ## Strings
 
-The table below shows all strings.
+The table below enumerates all strings that command 0x05 `SHOW-STRINGS(id0,id1)` can show.
 The odd entries are the actual values, the even values just before them a 4 letter description.
 
  |ID(hex)|ID(dec)| String                                            |
@@ -319,9 +325,9 @@ The odd entries are the actual values, the even values just before them a 4 lett
  |   10  |   16  | `BL.en`                                           |
  |   11  |   17  | Blinking globally enabled, e.g. `0x00`            |
  |   12  |   18  | `BL.hi`                                           |
- |   13  |   19  | Blinking hi time, e.g. `0x19`                    |
+ |   13  |   19  | Blinking hi time, e.g. `0x19`                     |
  |   14  |   20  | `BL.lo`                                           |
- |   15  |   21  | Blinking lo time, e.g. `0x19`                    |
+ |   15  |   21  | Blinking lo time, e.g. `0x19`                     |
  |   16  |   22  | `BL.mk`                                           |
  |   17  |   23  | Blinking mask, e.g. `0x0F`                        |
  |   18  |   24  | `DSP.0`                                           |

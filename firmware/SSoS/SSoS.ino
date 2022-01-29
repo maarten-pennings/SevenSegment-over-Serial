@@ -1,7 +1,7 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "5.1"
+#define APP_VERSION  "5.2"
 #define APP_WAIT_MS  2000
 
 
@@ -258,10 +258,10 @@ uint8_t app_cmd_len[0x20] = {
     2, // SET-BLINK-MASK(0..F)             0F  03   3  ETX  ^C     End of Text
     3, // SET-BLINK-TIMES(0..FF,0..FF)  19,19  04   4  EOT  ^D     End of Transmission
     3, // SHOW-STRINGS(from,to)             -  05   5  ENQ  ^E     Enquiry
-    1, // RESET                             -  06   6  ACK  ^F     Acknowledgment
+    1, // CURSOR-RIGHT                      -  06   6  ACK  ^F     Acknowledgment
     1, // BLINK-ENABLE                 see#0B  07   7  BEL  ^G  \a Bell (beep or the flash)
     1, // CURSOR-LEFT                       -  08   8  BS   ^H  \b Backspace
-    1, // CURSOR-RIGHT                      -  09   9  HT   ^I  \t Horizontal Tab
+    1, // CURSOR-EOLN                       -  09   9  HT   ^I  \t Horizontal Tab
     1, // LINE-COMMIT                       -  0A  10  LF   ^J  \n Line Feed (moves line down)
     1, // BLINK-DISABLE                   yes  0B  11  VT   ^K  \v Vertical Tab
     1, // CLEAR-AND-HOME                  yes  0C  12  FF   ^L  \f Form Feed (clear the screen)
@@ -273,7 +273,7 @@ uint8_t app_cmd_len[0x20] = {
     2, // CHAR-TIME                        19  12  18  DC2  ^R     Device Control 2
     2, // PATTERN-ONE(pat)                  -  13  19  DC3  ^S     Device Control 3 (often XOFF)
     5, // PATTERN-ALL(p0,p1,p2,p3)          -  14  20  DC4  ^T     Device Control 4
-    0, // ignored                              15  21  NAK  ^U     Negative Acknowledgment
+    0, // RESET                                15  21  NAK  ^U     Negative Acknowledgment
     0, // ignored                              16  22  SYN  ^V     Synchronous Idle
     0, // ignored                              17  23  ETB  ^W     End of Transmission Block
     0, // ignored                              18  24  CAN  ^X     Cancel
@@ -302,14 +302,14 @@ void app_cmd_exec(uint8_t * argv ) {
     drv7s_blinking_hilo_set(argv[1],argv[2]);
   } else  if( cmd==0x05 ) { // SHOW-STRINGS (0x05/5 + from_index + to_index)
     app_show_strings(argv[1],argv[2]);
-  } else  if( cmd==0x06 ) { // RESET (0x06/6)
-    app_reset();
+  } else  if( cmd==0x06 ) { // CURSOR-RIGHT (0x06/6)
+    if( app_cursor<DRV7S_UNITCOUNT ) app_cursor++;
   } else  if( cmd==0x07 ) { // BLINK-ENABLE (0x07/7/\a)
     drv7s_blinking_mode_set(1);
   } else  if( cmd==0x08 ) { // CURSOR-LEFT (0x08/8/\b)
     if( app_cursor>0 ) app_cursor--;
-  } else  if( cmd==0x09 ) { // CURSOR-RIGHT (0x09/9/\t)
-    if( app_cursor<DRV7S_UNITCOUNT ) app_cursor++;
+  } else  if( cmd==0x09 ) { // CURSOR-EOLN (0x09/9/\t)
+    app_cursor = DRV7S_UNITCOUNT;
   } else  if( cmd==0x0A ) { // LINE-COMMIT (0x0A/10/\n)
     if( !app_charenabled ) app_commit_line();
   } else  if( cmd==0x0B ) { // BLINK-DISABLE (0x0B/11/\v)
@@ -334,6 +334,8 @@ void app_cmd_exec(uint8_t * argv ) {
   } else  if( cmd==0x14 ) { // PATTERN-ALL (0x14/20 + pattern + pattern + pattern + pattern)
     // Spec-point: fills display but does not change cusror
     for( uint8_t i=0; i<DRV7S_UNITCOUNT; i++ ) drv7s_framebuf[i] = argv[i+1];
+  } else  if( cmd==0x15 ) { // RESET (0x15/20)
+    app_reset();
   }
 }
 
