@@ -116,31 +116,31 @@ For example `2.7` can show as on the left (DOT-ENABLE) or on the right (DOT-DISA
 
 ## Control characters
 
-The below table gives an overview of all control characters ("commands"); details are in the subsections below.
+The below table gives an overview of all control characters ("SSoS commands"); details are in the subsections below.
 
- | HEX | DEC | NAME | KEY |C-ESC | ASCII description               || SSoS command             |default (hex)|
- |:---:|:---:|:----:|:---:|:----:|:--------------------------------||:-------------------------|------------:|
- |  00 |   0 |  NUL |  ^@ |  \0  | Null                            || RESET                    |           - |
- |  01 |   1 |  SOH |  ^A |      | Start of Heading                || SET-FONT(id)             |          00 |  
- |  02 |   2 |  STX |  ^B |      | Start of Text                   || SET-BRIGHTNESS(level)    |          04 |  
- |  03 |   3 |  ETX |  ^C |      | End of Text                     || SET-BLINK-MASK(mask)     |          0F |  
- |  04 |   4 |  EOT |  ^D |      | End of Transmission             || SET-BLINK-TIMES(hi,lo)   |       19,19 |  
- |  05 |   5 |  ENQ |  ^E |      | Enquiry                         || SHOW-STRINGS(id0,id1)    |           - |  
- |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  || CURSOR-RIGHT             |           - |  
- |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        || BLINK-ENABLE             |          no |  
- |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       || CURSOR-LEFT              |           - |  
- |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  || CURSOR-EOLN              |           - |  
- |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     || LINE-COMMIT              |           - |  
- |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    || BLINK-DISABLE            |         yes |  
- |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    || CLEAR-AND-HOME           |         yes |  
- |  0D |  13 |  CR  |  ^M | `\r` | Carriage Return (start of line) || CURSOR-HOME              |           - |  
- |  0E |  14 |  SO  |  ^N |      | Shift Out                       || DOT-DISABLE              |          no |  
- |  0F |  15 |  SI  |  ^O |      | Shift In                        || DOT-ENABLE               |         yes |  
- |  10 |  16 |  DLE |  ^P |      | Data Link Escape                || CHAR-ENABLE              |         yes |  
- |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    || CHAR-DISABLE             |          no |  
- |  12 |  18 |  DC2 |  ^R |      | Device Control 2                || CHAR-TIME(time)          |          19 |  
- |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   || PATTERN-ONE(pat)         |           - |  
- |  14 |  20 |  DC4 |  ^T |      | Device Control 4                || PATTERN-ALL(p0,p1,p2,p3) |           - |  
+ | HEX | DEC | NAME | KEY |C-ESC | ASCII description               | SSoS command             |default (hex)|
+ |:---:|:---:|:----:|:---:|:----:|:--------------------------------|:-------------------------|------------:|
+ |  00 |   0 |  NUL |  ^@ |  \0  | Null                            | RESET                    |           - |
+ |  01 |   1 |  SOH |  ^A |      | Start of Heading                | SET-FONT(id)             |          00 |  
+ |  02 |   2 |  STX |  ^B |      | Start of Text                   | SET-BRIGHTNESS(level)    |          04 |  
+ |  03 |   3 |  ETX |  ^C |      | End of Text                     | SET-BLINK-MASK(mask)     |          0F |  
+ |  04 |   4 |  EOT |  ^D |      | End of Transmission             | SET-BLINK-TIMES(hi,lo)   |       19,19 |  
+ |  05 |   5 |  ENQ |  ^E |      | Enquiry                         | SHOW-STRINGS(id0,id1)    |           - |  
+ |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | CURSOR-RIGHT             |           - |  
+ |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        | BLINK-ENABLE             |          no |  
+ |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       | CURSOR-LEFT              |           - |  
+ |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  | CURSOR-EOLN              |           - |  
+ |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     | LINE-COMMIT              |           - |  
+ |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    | BLINK-DISABLE            |         yes |  
+ |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    | CLEAR-AND-HOME           |         yes |  
+ |  0D |  13 |  CR  |  ^M | `\r` | Carriage Return (start of line) | CURSOR-HOME              |           - |  
+ |  0E |  14 |  SO  |  ^N |      | Shift Out                       | DOT-DISABLE              |          no |  
+ |  0F |  15 |  SI  |  ^O |      | Shift In                        | DOT-ENABLE               |         yes |  
+ |  10 |  16 |  DLE |  ^P |      | Data Link Escape                | CHAR-ENABLE              |         yes |  
+ |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    | CHAR-DISABLE             |          no |  
+ |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | CHAR-TIME(time)          |          19 |  
+ |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   | PATTERN-ONE(pat)         |           - |  
+ |  14 |  20 |  DC4 |  ^T |      | Device Control 4                | PATTERN-ALL(p0,p1,p2,p3) |           - |  
 
 
 
