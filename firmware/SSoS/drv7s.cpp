@@ -20,7 +20,7 @@ static uint8_t drv7s_framecount; // desired blinking period (in frames)
 static uint8_t drv7s_frameshi;   // desired hi-time for blinking (in frames)
 static uint8_t drv7s_noblinkmask;// desired bit mask indicating which units are exempt from blinking (are always on)
 
-// Resets state (brightness:4, blinking:disabled,25/25,0b0000)
+// Resets state (framebuf:0,0,0,0; brightness:4; blinking:disabled,25/25,0b0000)
 void drv7s_reset() {
   memset(drv7s_framebuf,0,DRV7S_UNITCOUNT); // Wipe screen
 

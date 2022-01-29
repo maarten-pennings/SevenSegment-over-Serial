@@ -1,7 +1,7 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "5.2"
+#define APP_VERSION  "5.3"
 #define APP_WAIT_MS  2000
 
 
@@ -24,7 +24,7 @@ uint8_t app_chartime20ms;
 
 // Reset the complete state (driver and app).
 void app_reset() {
-  drv7s_reset();
+  drv7s_reset(); // framebuf:0,0,0,0; brightness:4; blinking:disabled,25/25,0b0000
   app_fontid = FONT_MIMIC7S; // FONT_UNIQUE7S;
   app_cursor = 0;
   app_dotenabled = 1;
@@ -273,7 +273,7 @@ uint8_t app_cmd_len[0x20] = {
     2, // CHAR-TIME                        19  12  18  DC2  ^R     Device Control 2
     2, // PATTERN-ONE(pat)                  -  13  19  DC3  ^S     Device Control 3 (often XOFF)
     5, // PATTERN-ALL(p0,p1,p2,p3)          -  14  20  DC4  ^T     Device Control 4
-    0, // RESET                                15  21  NAK  ^U     Negative Acknowledgment
+    1, // RESET                                15  21  NAK  ^U     Negative Acknowledgment
     0, // ignored                              16  22  SYN  ^V     Synchronous Idle
     0, // ignored                              17  23  ETB  ^W     End of Transmission Block
     0, // ignored                              18  24  CAN  ^X     Cancel
@@ -292,49 +292,49 @@ uint8_t app_cmd_len[0x20] = {
 // If app_cmd_len[ch]==0, this function will not be called with argv[0]==ch.
 void app_cmd_exec(uint8_t * argv ) {
   uint8_t cmd = argv[0];
-  if(         cmd==0x01 ) { // SET-FONT (0x01/1 + font_id)
+  if(        cmd==0x01 ) { // SET-FONT (0x01/1 + font_id)
     app_fontid = argv[1] % 2;
-  } else  if( cmd==0x02 ) { // SET-BRIGHTNESS (0x02/2 + brightness_level)
+  } else if( cmd==0x02 ) { // SET-BRIGHTNESS (0x02/2 + brightness_level)
     drv7s_brightness_set( argv[1]%16 ); // %16 allows \x01,1,A,a all act as brightness 1
-  } else  if( cmd==0x03 ) { // SET-BLINK-MASK (0x03/3 + blink_mask)
+  } else if( cmd==0x03 ) { // SET-BLINK-MASK (0x03/3 + blink_mask)
     drv7s_blinking_mask_set(argv[1]%16);
-  } else  if( cmd==0x04 ) { // SET-BLINK-TIMES (0x04/4 + hitime + lotime)
+  } else if( cmd==0x04 ) { // SET-BLINK-TIMES (0x04/4 + hitime + lotime)
     drv7s_blinking_hilo_set(argv[1],argv[2]);
-  } else  if( cmd==0x05 ) { // SHOW-STRINGS (0x05/5 + from_index + to_index)
+  } else if( cmd==0x05 ) { // SHOW-STRINGS (0x05/5 + from_index + to_index)
     app_show_strings(argv[1],argv[2]);
-  } else  if( cmd==0x06 ) { // CURSOR-RIGHT (0x06/6)
+  } else if( cmd==0x06 ) { // CURSOR-RIGHT (0x06/6)
     if( app_cursor<DRV7S_UNITCOUNT ) app_cursor++;
-  } else  if( cmd==0x07 ) { // BLINK-ENABLE (0x07/7/\a)
+  } else if( cmd==0x07 ) { // BLINK-ENABLE (0x07/7/\a)
     drv7s_blinking_mode_set(1);
-  } else  if( cmd==0x08 ) { // CURSOR-LEFT (0x08/8/\b)
+  } else if( cmd==0x08 ) { // CURSOR-LEFT (0x08/8/\b)
     if( app_cursor>0 ) app_cursor--;
-  } else  if( cmd==0x09 ) { // CURSOR-EOLN (0x09/9/\t)
+  } else if( cmd==0x09 ) { // CURSOR-EOLN (0x09/9/\t)
     app_cursor = DRV7S_UNITCOUNT;
-  } else  if( cmd==0x0A ) { // LINE-COMMIT (0x0A/10/\n)
+  } else if( cmd==0x0A ) { // LINE-COMMIT (0x0A/10/\n)
     if( !app_charenabled ) app_commit_line();
-  } else  if( cmd==0x0B ) { // BLINK-DISABLE (0x0B/11/\v)
+  } else if( cmd==0x0B ) { // BLINK-DISABLE (0x0B/11/\v)
     drv7s_blinking_mode_set(0);
-  } else  if( cmd==0x0C ) { // CLEAR-AND-HOME (0x0C/12/\f)
+  } else if( cmd==0x0C ) { // CLEAR-AND-HOME (0x0C/12/\f)
     app_clear_home();
-  } else  if( cmd==0x0D ) { // CURSOR-HOME (0x0D/13/\r)
+  } else if( cmd==0x0D ) { // CURSOR-HOME (0x0D/13/\r)
     app_cursor = 0; // cursor home
-  } else  if( cmd==0x0E ) { // DOT-DISABLE (0x0E/14)
+  } else if( cmd==0x0E ) { // DOT-DISABLE (0x0E/14)
     app_dotenabled = 0;
-  } else  if( cmd==0x0F ) { // DOT-ENABLE (0x0F/15)
+  } else if( cmd==0x0F ) { // DOT-ENABLE (0x0F/15)
     app_dotenabled = 1;
-  } else  if( cmd==0x10 ) { // CHAR-ENABLE (0x10/16)
+  } else if( cmd==0x10 ) { // CHAR-ENABLE (0x10/16)
     app_charenabled = 1;
-  } else  if( cmd==0x11 ) { // CHAR-DISABLE (0x11/17)
+  } else if( cmd==0x11 ) { // CHAR-DISABLE (0x11/17)
     app_charenabled = 0;
-  } else  if( cmd==0x12 ) { // CHAR-TIME (0x12/18 + char_time)
+  } else if( cmd==0x12 ) { // CHAR-TIME (0x12/18 + char_time)
     app_chartime20ms = argv[1];
-  } else  if( cmd==0x13 ) { // PATTERN-ONE (0x13/19 + pattern)
+  } else if( cmd==0x13 ) { // PATTERN-ONE (0x13/19 + pattern)
     // Spec-point: inserts a "raw" character so moves cursor
     app_putpattern( argv[1] );  
-  } else  if( cmd==0x14 ) { // PATTERN-ALL (0x14/20 + pattern + pattern + pattern + pattern)
+  } else if( cmd==0x14 ) { // PATTERN-ALL (0x14/20 + pattern + pattern + pattern + pattern)
     // Spec-point: fills display but does not change cusror
     for( uint8_t i=0; i<DRV7S_UNITCOUNT; i++ ) drv7s_framebuf[i] = argv[i+1];
-  } else  if( cmd==0x15 ) { // RESET (0x15/20)
+  } else if( cmd==0x15 ) { // RESET (0x15/20)
     app_reset();
   }
 }
