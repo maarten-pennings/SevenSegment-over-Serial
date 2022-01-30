@@ -159,30 +159,33 @@ The below table gives an overview of all control characters, the "SSoS commands"
 details are in the subsections below.
 Most subsections come with an example, the [source](examples/examples.py) is available in this repo.
 
- | HEX | DEC | NAME | KEY |C-ESC | ASCII description               | SSoS command             |default (hex)|
- |:---:|:---:|:----:|:---:|:----:|:--------------------------------|:-------------------------|------------:|
- |  00 |   0 |  NUL |  ^@ |  \0  | Null                            | RESET                    |           - |
- |  01 |   1 |  SOH |  ^A |      | Start of Heading                | SET-FONT(id)             |          00 |  
- |  02 |   2 |  STX |  ^B |      | Start of Text                   | SET-BRIGHTNESS(level)    |          04 |  
- |  03 |   3 |  ETX |  ^C |      | End of Text                     | SET-BLINK-MASK(mask)     |          0F |  
- |  04 |   4 |  EOT |  ^D |      | End of Transmission             | SET-BLINK-TIMES(hi,lo)   |       19,19 |  
- |  05 |   5 |  ENQ |  ^E |      | Enquiry                         | SHOW-STRINGS(id0,id1)    |           - |  
- |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | CURSOR-RIGHT             |           - |  
- |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        | BLINK-ENABLE             |          no |  
- |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       | CURSOR-LEFT              |           - |  
- |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  | CURSOR-EOLN              |           - |  
- |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     | LINE-COMMIT              |           - |  
- |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    | BLINK-DISABLE            |         yes |  
- |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    | CLEAR-AND-HOME           |         yes |  
- |  0D |  13 |  CR  |  ^M | `\r` | Carriage Return (start of line) | CURSOR-HOME              |           - |  
- |  0E |  14 |  SO  |  ^N |      | Shift Out                       | DOT-DISABLE              |          no |  
- |  0F |  15 |  SI  |  ^O |      | Shift In                        | DOT-ENABLE               |         yes |  
- |  10 |  16 |  DLE |  ^P |      | Data Link Escape                | CHAR-ENABLE              |         yes |  
- |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    | CHAR-DISABLE             |          no |  
- |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | CHAR-TIME(time)          |          19 |  
- |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   | PATTERN-ONE(pat)         |           - |  
- |  14 |  20 |  DC4 |  ^T |      | Device Control 4                | PATTERN-ALL(p0,p1,p2,p3) |           - |  
- |  1F |  31 |  US  |  ^_ |      | Unit Separator                  | RESET                    |           - |
+ | HEX | DEC | NAME | KEY |C-ESC | ASCII description               | SSoS command                                         |default (hex)|
+ |:---:|:---:|:----:|:---:|:----:|:--------------------------------|:-----------------------------------------------------|------------:|
+ |  00 |   0 |  NUL |  ^@ |  \0  | Null                            | [RESET](#0x00-reset)                                 |           - |
+ |  01 |   1 |  SOH |  ^A |      | Start of Heading                | [SET-FONT(id)](#0x01-set-fontid)                     |          00 |  
+ |  02 |   2 |  STX |  ^B |      | Start of Text                   | [SET-BRIGHTNESS(level)](#0x02-set-brightnesslevel)   |          04 |  
+ |  03 |   3 |  ETX |  ^C |      | End of Text                     | [SET-BLINK-MASK(mask)](#0x03-set-blink-maskmask)     |          0F |  
+ |  04 |   4 |  EOT |  ^D |      | End of Transmission             | [SET-BLINK-TIMES(hi,lo)](#0x04-set-blink-timeshilo)  |       19,19 |  
+ |  05 |   5 |  ENQ |  ^E |      | Enquiry                         | [SHOW-STRINGS(id0,id1)](#0x05-show-stringsid0id1)    |           - |  
+ |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | [CURSOR-RIGHT](#0x06-cursor-right)                   |           - |  
+ |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        | [BLINK-ENABLE](#0x07-a-blink-enable)                 |          no |  
+ |  08 |   8 |  BS  |  ^H | `\b` | Backspace                       | [CURSOR-LEFT](#0x08-b-cursor-left)                   |           - |  
+ |  09 |   9 |  HT  |  ^I | `\t` | Horizontal Tab                  | [CURSOR-EOLN](#0x09-t-cursor-eoln)                   |           - |  
+ |  0A |  10 |  LF  |  ^J | `\n` | Line Feed (moves line down)     | [LINE-COMMIT](#0x0a-n-line-commit)                   |           - |  
+ |  0B |  11 |  VT  |  ^K | `\v` | Vertical Tab                    | [BLINK-DISABLE](#0x0b-v-blink-disable)               |         yes |  
+ |  0C |  12 |  FF  |  ^L | `\f` | Form Feed (clear the screen)    | [CLEAR-AND-HOME](#0x0c-f-clear-and-home)             |         yes |  
+ |  0D |  13 |  CR  |  ^M | `\r` | Carriage Return (start of line) | [CURSOR-HOME](#0x0d-r-cursor-home)                   |           - |  
+ |  0E |  14 |  SO  |  ^N |      | Shift Out                       | [DOT-DISABLE](#0x0e-dot-disable)                     |          no |  
+ |  0F |  15 |  SI  |  ^O |      | Shift In                        | [DOT-ENABLE](#0x0f-dot-enable)                       |         yes |  
+ |  10 |  16 |  DLE |  ^P |      | Data Link Escape                | [CHAR-ENABLE](#0x10-char-enable)                     |         yes |  
+ |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    | [CHAR-DISABLE](#0x11-char-disable)                   |          no |  
+ |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | [CHAR-TIME(time)](#0x12-char-timetime)               |          19 |  
+ |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   | [PATTERN-ONE(pat)](#0x13-pattern-onepat)             |           - |  
+ |  14 |  20 |  DC4 |  ^T |      | Device Control 4                | [PATTERN-ALL(p0,p1,p2,p3)](#0x14-pattern-allp0p1p2p3)|           - |  
+ |  1F |  31 |  US  |  ^_ |      | Unit Separator                  | [RESET](#0x1f-reset)                                 |           - |
+
+
+
 
 
 
@@ -235,7 +238,7 @@ The control character SET-FONT sets the font used for new incoming characters.
 The font is selected with the argument, the font **id**.
 The device supports two fonts: 0 selects _LookAlike7s_ and 1 _Unique7s_.
 Font _LookAlike7s_ is optimized for readability and _Unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
-See the section on fonts for details.
+See the section on [Fonts](#fonts) for details.
 
 Note that the argument is taken "mod 2" so `\x00`, `0`, `L`, or `l` all select _LookAlike7s_, and `\x01`, `1`, `U`, or `u` all select _Unique7s_.
 
@@ -344,7 +347,7 @@ The default value is 0x0F or 15 or 0b1111 or all units blink.
 ### 0x04 SET-BLINK-TIMES(hi,lo)
 The control character SET-BLINK-TIMES determines the hi time (unit on) and lo time (unit off) when blinking is enabled  (in 20ms increments).
 
-See SET-BLINK-MASK for all blinking settings to be considered.
+See [SET-BLINK-MASK](#0x03-set-blink-maskmask) for all blinking settings to be considered.
 
 This control character requires two arguments **hi** and **lo**.
 The *hi* argument determines the unit on-time (in 20ms steps).
@@ -389,7 +392,7 @@ There are 20 settings, so an id ranges from 0 to 41.
 This command requires two arguments **id0** and **id1**.
 The control character SHOW-STRINGS will momentarily (2 sec per string) show the strings from index **id0** up to (and including) index **id1**.
 The upper limit is clipped to the highest id.
-See separate section below for a list of strings.
+See below for a list of [Strings](#strings) (string id's).
 
 Note `0x05 0x00 0xFF` will show all strings - since the `0xFF` will be clipped the the maximum.
 
@@ -456,7 +459,7 @@ Strings
 The control character CURSOR-RIGHT moves the cursor one position to the right
 (if not already at after right-most position 4).
 
-See also CURSOR-LEFT, CURSOR-EOLN, and CURSOR-HOME.
+See also [CURSOR-LEFT](#0x08-b-cursor-left), [CURSOR-EOLN](#0x09-t-cursor-eoln), and [CURSOR-HOME](#0x0d-r-cursor-home).
 
 #### Example
 
@@ -475,15 +478,15 @@ See also CURSOR-LEFT, CURSOR-EOLN, and CURSOR-HOME.
 
 
 ### 0x07 (`\a`) BLINK-ENABLE
-The control character BLINK-ENABLE globally enables blinking (see also BLINK-DISABLE).
+The control character BLINK-ENABLE globally enables blinking (see also [BLINK-DISABLE](#0x0b-v-blink-disable)).
 
-See SET-BLINK-MASK for all blinking settings to be considered.
+See [SET-BLINK-MASK](#0x03-set-blink-maskmask) for all blinking settings to be considered.
 
 By default global blinking is disabled.
 
 #### Example
 
-See "0x03 SET-BLINK-MASK(mask)".
+See [SET-BLINK-MASK](#0x03-set-blink-maskmask).
 
 
 
@@ -492,7 +495,7 @@ See "0x03 SET-BLINK-MASK(mask)".
 The control character CURSOR-LEFT moves the cursor one position to the left
 (if not already at left-most position 0).
 
-See also CURSOR-RIGHT, CURSOR-EOLN, and CURSOR-HOME.
+See also [CURSOR-RIGHT](#0x06-cursor-right), [CURSOR-EOLN](#0x09-t-cursor-eoln), and [CURSOR-HOME](#0x0d-r-cursor-home).
 
 #### Example
 
@@ -520,7 +523,7 @@ See also CURSOR-RIGHT, CURSOR-EOLN, and CURSOR-HOME.
 The control character CURSOR-EOLN moves the cursor to the right-most position (position 4).
 This is convenient for printing right aligned (e.g. numbers).
 
-See also CURSOR-LEFT, CURSOR-RIGHT, and CURSOR-HOME.
+See also [CURSOR-LEFT](#0x08-b-cursor-left), [CURSOR-RIGHT](#0x06-cursor-right), and [CURSOR-HOME](#0x0d-r-cursor-home).
 
 #### Example
 
@@ -543,7 +546,7 @@ See also CURSOR-LEFT, CURSOR-RIGHT, and CURSOR-HOME.
 ### 0x0A (`\n`) LINE-COMMIT
 The control character LINE-COMMIT is ignored in character mode (CHAR_ENABLE).
 When line mode is enabled (CHAR_DISABLE), an explicit LINE-COMMIT must be given to show the line.
-See model section for detaild explanation.
+See model section for detailed explanation.
 
 By default character mode is enabled.
 
@@ -580,15 +583,15 @@ By default character mode is enabled.
 
 
 ### 0x0B (`\v`) BLINK-DISABLE
-The control character BLINK-DISABLE globally disables blinking (see also BLINK-ENABLE).
+The control character BLINK-DISABLE globally disables blinking (see also [BLINK-ENABLE](#0x07-a-blink-enable)).
 
-See SET-BLINK-MASK for all blinking settings to be considered.
+See [SET-BLINK-MASK](#0x03-set-blink-maskmask) for all blinking settings to be considered.
 
 By default global blinking is disabled.
 
 #### Example
 
-See "0x03 SET-BLINK-MASK(mask)".
+See [SET-BLINK-MASK](#0x03-set-blink-maskmask).
 
 
 
@@ -623,7 +626,7 @@ The control character CLEAR-AND-HOME clears the screen (i.e. the frame/line buff
 ### 0x0D (`\r`) CURSOR-HOME
 The control character CURSOR-HOME homes the cursor, i.e. sets it to 0. It does not clear screen.
 
-See also CURSOR-RIGHT, CURSOR-LEFT, and CURSOR-RIGHT.
+See also [CURSOR-RIGHT](#0x06-cursor-right), [CURSOR-LEFT](#0x08-b-cursor-left), and [CURSOR-EOLN](#0x09-t-cursor-eoln).
 
 #### Example
 
@@ -644,7 +647,7 @@ See also CURSOR-RIGHT, CURSOR-LEFT, and CURSOR-RIGHT.
 
 
 ### 0x0E DOT-DISABLE
-The control character DOT-DISABLE disables dot replacement. See Model section for details (see also DOT-ENABLE).
+The control character DOT-DISABLE disables dot replacement. See Model section for details (see also [DOT-ENABLE](#0x0f-dot-enable)).
 
 By default dot replacement is enabled.
 
@@ -684,7 +687,7 @@ By default dot replacement is enabled.
 
 
 ### 0x0F DOT-ENABLE
-The control character DOT-ENABLE enables dot replacement. See Model section for details (see also DOT-DISABLE).
+The control character DOT-ENABLE enables dot replacement. See Model section for details (see also [DOT-DISABLE](#0x0e-dot-disable)).
 
 By default dot replacement is enabled.
 
@@ -696,7 +699,7 @@ See "0x0E DOT-DISABLE"
 
 
 ### 0x10 CHAR-ENABLE
-The control character CHAR-ENABLE enables _character mode_ (as opposed to _line mode_, see CHAR-DISABLE). 
+The control character CHAR-ENABLE enables _character mode_ (as opposed to _line mode_, see [CHAR-DISABLE](#0x11-char-disable)). 
 See Model section for details, but the summary: in character mode received characters scrolls the display.
 When character mode is enabled, make sure the CHAR-TIME is set as desired.
 
@@ -736,7 +739,7 @@ In my case, the last characters `'nopqrstuvwxyz"` are lost, 58 are received.
 
 
 ### 0x11 CHAR-DISABLE
-The control character CHAR-DISABLE (disables _character mode_ and thus) enables _line mode_. 
+The control character CHAR-DISABLE (disables _character mode_ and thus) enables _line mode_. See also [CHAR-ENABLE](#0x10-char-enable).
 See Model section for details, but the summary: in line mode received characters are buffered in an internal line buffer and are copied to the display when `\n` is received.
 When line mode is enabled, make sure to send a LINE-COMMIT (`\n`) at the end of each line.
 
