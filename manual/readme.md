@@ -547,7 +547,7 @@ See also [CURSOR-LEFT](#0x08-b-cursor-left), [CURSOR-RIGHT](#0x06-cursor-right),
 ### 0x0A (`\n`) LINE-COMMIT
 The control character LINE-COMMIT is ignored in character mode ([CHAR-ENABLE](#0x10-char-enable)).
 When line mode is enabled ([CHAR-DISABLE](#0x11-char-disable)), an explicit LINE-COMMIT must be given to show the line.
-See model section for detailed explanation.
+See [Model](#model) section for detailed explanation.
 
 By default character mode is enabled.
 
@@ -600,6 +600,7 @@ See [SET-BLINK-MASK](#0x03-set-blink-maskmask).
 
 ### 0x0C (`\f`) CLEAR-AND-HOME
 The control character CLEAR-AND-HOME clears the screen (i.e. the frame/line buffer) and homes the cursor.
+See also the command [CURSOR-HOME](#0x0d-r-cursor-home), it only homes.
 
 #### Example
 
@@ -625,7 +626,8 @@ The control character CLEAR-AND-HOME clears the screen (i.e. the frame/line buff
 
 
 ### 0x0D (`\r`) CURSOR-HOME
-The control character CURSOR-HOME homes the cursor, i.e. sets it to 0. It does not clear screen.
+The control character CURSOR-HOME homes the cursor, i.e. sets it to 0. 
+It does not clear screen, like [CLEAR-AND-HOME](#0x0c-f-clear-and-home).
 
 See also [CURSOR-RIGHT](#0x06-cursor-right), [CURSOR-LEFT](#0x08-b-cursor-left), and [CURSOR-EOLN](#0x09-t-cursor-eoln).
 
@@ -648,7 +650,9 @@ See also [CURSOR-RIGHT](#0x06-cursor-right), [CURSOR-LEFT](#0x08-b-cursor-left),
 
 
 ### 0x0E DOT-DISABLE
-The control character DOT-DISABLE disables dot replacement. See Model section for details (see also [DOT-ENABLE](#0x0f-dot-enable)).
+The control character DOT-DISABLE disables dot replacement. 
+See [Model](#model) section for details (see also [DOT-ENABLE](#0x0f-dot-enable)).
+In summary:  all `.` characters will be rendered in their own 7-segment unit according to the font.
 
 By default dot replacement is enabled.
 
@@ -675,11 +679,9 @@ By default dot replacement is enabled.
 
 ![2.7 (dot enabled)](cmd0x0E-2.7.png) ![.E.F.G.H. (dot enabled)](cmd0x0E-.E.F.G.H..png) ![2.7 (dot disabled)](cmd0x0E-2-7.png) ![.E.F.G.H. (dot disabled)](cmd0x0E-G-H-.png) ![2.7 (dot enabled)](cmd0x0E-2.7.png)
 
-- After reset mode is "dot replacement enabled". 
-  All `.` characters will be replaced by switching on the decimal point of the 7-segment unit.
+- After reset, dot replacement is enabled. 
 - The dots in `2.7` and `.E.F.G.H.` get replaced (except the dot at the beginning of `.E.F.G.H.` - there is no previous character).
-- Next the mode changes to "dot replacement disabled" with command `0x0E`.
-  All `.` characters will be rendered in their own 7-segment unit.
+- Next, dot replacement is disabled with command `0x0E`.
 - The dots in `2.7` and `.E.F.G.H.` are not replaced. This makes `2.7` three units long.
   It makes `.E.F.G.H.I.` nine units long, so that scrolls (after reset, character mode is active).
 - The `0x0F` enables dot replacement again, so the final `2.7` comes out with the decimal point again.
@@ -688,20 +690,22 @@ By default dot replacement is enabled.
 
 
 ### 0x0F DOT-ENABLE
-The control character DOT-ENABLE enables dot replacement. See Model section for details (see also [DOT-DISABLE](#0x0e-dot-disable)).
+The control character DOT-ENABLE enables dot replacement. 
+See [Model](#model) section for details (see also [DOT-DISABLE](#0x0e-dot-disable)).
+In summary: all `.` characters will be replaced by switching on the decimal point of the 7-segment unit.
 
 By default dot replacement is enabled.
 
 #### Example
 
-See "0x0E DOT-DISABLE"
+See [DOT-DISABLE](#0x0e-dot-disable).
 
 
 
 
 ### 0x10 CHAR-ENABLE
 The control character CHAR-ENABLE enables _character mode_ (as opposed to _line mode_, see [CHAR-DISABLE](#0x11-char-disable)). 
-See Model section for details, but the summary: in character mode received characters scrolls the display.
+See [Model](#model) section for details, but the summary: in _character mode_ received characters scrolls the display.
 When character mode is enabled, make sure the [CHAR-TIME](#0x12-char-timetime) is set as desired.
 
 Note that the device throttles reception of characters, so care should be taken not too send too many characters from the host.
@@ -741,7 +745,7 @@ In my case, the last characters `'nopqrstuvwxyz"` are lost, 58 are received.
 
 ### 0x11 CHAR-DISABLE
 The control character CHAR-DISABLE (disables _character mode_ and thus) enables _line mode_. See also [CHAR-ENABLE](#0x10-char-enable).
-See Model section for details, but the summary: in line mode received characters are buffered in an internal line buffer and are copied to the display when `\n` is received.
+See [Model](#model) section for details, but the summary: in _line mode_ received characters are buffered in an internal line buffer and are copied to the display when `\n` is received.
 When line mode is enabled, make sure to send a [LINE-COMMIT](#0x0a-n-line-commit) (`\n`) at the end of each line.
 
 By default character mode is enabled.
