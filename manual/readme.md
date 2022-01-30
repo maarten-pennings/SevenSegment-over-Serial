@@ -229,6 +229,7 @@ When using the escape sequence `\0` to reset, make sure not to append digits:
 In this case, use `\00075` (the `\000` is the RESET command in octal), or use hex (`\x0075`),
 or, a bit of a hack, write `\0.75` (SSoS will not print the `.` when there is no character before it).
 
+The command `\x1f` is equal to `\x00`: it [RESET](#0x1f-reset)s.
 
 
 
@@ -307,9 +308,9 @@ As argument we pass a digit (eg `4`) instead of the byte (`\x04`). Both work.
 The control character SET-BLINK-MASK determines _which_ units blink when blinking is enabled.
 
 For a display unit to blink the following settings need to be considered
- - a mask determining which units blink, instead of being always on (SET-BLINK-MASK);
- - the blinking hi and lo times (SET-BLINK-TIMES);
- - global blink enable (BLINK-ENABLE/BLINK-DISABLE).
+ - a mask determining which units blink, instead of being always on ([SET-BLINK-MASK](#0x03-set-blink-maskmask));
+ - the blinking hi and lo times ([SET-BLINK-TIMES](#0x04-set-blink-timeshilo));
+ - global blink enable ([BLINK-ENABLE](#0x07-a-blink-enable)/[BLINK-DISABLE](#0x0b-v-blink-disable)).
 
 The **mask** is set with the argument, only the lower 4 bits are considered.
 When bit `i` from the mask is 1, unit `i` will blink - if blinking is globally enabled.
@@ -544,8 +545,8 @@ See also [CURSOR-LEFT](#0x08-b-cursor-left), [CURSOR-RIGHT](#0x06-cursor-right),
 
 
 ### 0x0A (`\n`) LINE-COMMIT
-The control character LINE-COMMIT is ignored in character mode (CHAR_ENABLE).
-When line mode is enabled (CHAR_DISABLE), an explicit LINE-COMMIT must be given to show the line.
+The control character LINE-COMMIT is ignored in character mode ([CHAR-ENABLE](#0x10-char-enable)).
+When line mode is enabled ([CHAR-DISABLE](#0x11-char-disable)), an explicit LINE-COMMIT must be given to show the line.
 See model section for detailed explanation.
 
 By default character mode is enabled.
@@ -701,7 +702,7 @@ See "0x0E DOT-DISABLE"
 ### 0x10 CHAR-ENABLE
 The control character CHAR-ENABLE enables _character mode_ (as opposed to _line mode_, see [CHAR-DISABLE](#0x11-char-disable)). 
 See Model section for details, but the summary: in character mode received characters scrolls the display.
-When character mode is enabled, make sure the CHAR-TIME is set as desired.
+When character mode is enabled, make sure the [CHAR-TIME](#0x12-char-timetime) is set as desired.
 
 Note that the device throttles reception of characters, so care should be taken not too send too many characters from the host.
 This will overflow the internal reception buffer, causing loss of received bytes.
@@ -723,7 +724,7 @@ By default character mode is enabled.
 ```
 
  - After rest, character mode is enabled by default, so the `\x10` is superfluous.
- - In character mode, `\n`s are ignored. It is suggested to start each line with `\f` (CLEAR_AND_HOME).
+ - In character mode, `\n`s are ignored. It is suggested to start each line with `\f` ([CLEAR-AND-HOME](#0x0c-f-clear-and-home)).
  - This is not done for `IJKLMNOP`, and we see that it restarts scrolling, for scrolling out `EFGH`.
  - The best scroll effect is achieved by prepending and appending four spaces (last example).
 
@@ -741,7 +742,7 @@ In my case, the last characters `'nopqrstuvwxyz"` are lost, 58 are received.
 ### 0x11 CHAR-DISABLE
 The control character CHAR-DISABLE (disables _character mode_ and thus) enables _line mode_. See also [CHAR-ENABLE](#0x10-char-enable).
 See Model section for details, but the summary: in line mode received characters are buffered in an internal line buffer and are copied to the display when `\n` is received.
-When line mode is enabled, make sure to send a LINE-COMMIT (`\n`) at the end of each line.
+When line mode is enabled, make sure to send a [LINE-COMMIT](#0x0a-n-line-commit) (`\n`) at the end of each line.
 
 By default character mode is enabled.
 
@@ -777,6 +778,7 @@ The above code does not overflow the reception buffer, so the SSoS device can ke
 
 ### 0x12 CHAR-TIME(time)
 The control character CHAR-TIME sets the wait time per character scrolled in character mode (in 20ms increments).
+See [CHAR-ENABLE](#0x10-char-enable).
 
 The **time** is set with the argument, ranging from no delay (0) up to max delay (255×20ms).
 The argument may be 0.
@@ -826,7 +828,7 @@ This command inserts a character in the flow, so it moves the cursor and optiona
 ![A=a](cmd0x13-A=a.png)
 
  - The command 0x13 (PATTERN-ONE) gets as pattern 0x49 or 0b01001001, so segments 0/A, 3/D, and 6/G are on.
- - The PATTERN-ONE inserts this pattern into the flow (moving the cursor).
+ - The PATTERN-ONE inserts this pattern into the flow (moving the cursor), unlike [PATTERN-ALL](#0x14-pattern-allp0p1p2p3).
 
 
 
@@ -849,7 +851,7 @@ This command directly accesses the frame buffer; it does not use the cursor, nor
 ![rectangle](cmd0x14-rect.png) ![rectangle with b](cmd0x14-rectb.png)
 
  - After a reset an `A` is printed.
- - However, the PATTERN-ALL command overwrites the frame buffer, units 0-3, without looking at the cursor.
+ - However, the PATTERN-ALL command overwrites the frame buffer, units 0-3, without looking at the cursor, unlike [PATTERN-ONE](#0x13-pattern-onepat).
  - The last pattern 0x8C or 0b10001100 switches on segments 2/C, 3/D and 7/P.
  - The command shows a partial rectangle.
  - After two seconds, a `B` is printed, the cursor was not changed by PATTERN-ALL, so it appears next to the overwritten `A`.
@@ -872,10 +874,15 @@ are not able to send a zero-byte 0x00 (a C `printf` might suffer from this).
 
 ![HI](cmd0x00-HI.png) ![\x0075](cmd0x00-75.png)
 
-The command `\x1f` is equal to `\x00`: it resets .
+The command `\x1f` is equal to `\x00`: it [RESET](#0x00-reset)s.
+
+
+
 
 
 ## Fonts
+
+The active font can be selected with the command [SET-FONT](#0x01-set-fontid).
 
 This is the font table for _Unique7s_ (not the default font):
 
@@ -886,9 +893,12 @@ The cells with red marks have visual duplicates.
 
 ![LookAlike7s](../font/lookalike7s_ascii.png)
 
+
+
+
 ## Strings
 
-The table below enumerates all strings that command 0x05 `SHOW-STRINGS(id0,id1)` can show.
+The table below enumerates all strings that command [SHOW-STRINGS](#0x05-show-stringsid0id1) can show.
 The odd entries are the setting _values_, the even entries just before them their _name_.
 
  |ID(hex)|ID(dec)| String                                            |
