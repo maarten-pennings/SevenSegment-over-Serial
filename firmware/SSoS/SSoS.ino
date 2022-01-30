@@ -1,7 +1,7 @@
 // SSoS.ino - Seven Segment over Serial firmware
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "5.4"
+#define APP_VERSION  "5.5"
 #define APP_WAIT_MS  2000
 
 
@@ -44,26 +44,25 @@ void app_reset() {
 uint8_t app_linebuf[DRV7S_UNITCOUNT];
 
 
-// This is the "print to 7-segment", filling the framebuffer exposed by drv7s or the line buffer, depending on app_charenabled.
+// This is the "print to 7-segment", filling the framebuffer exposed by drv7s, or the line buffer, depending on app_charenabled.
 // `pattern`is a 8-bit code telling which LEDs of the 7-segment must be switched on (bit-0=segment-a, bit-1=segment-b, etc).
-// The segment is identified by `app_cursor`. 
-// If the cursor is beyond the display, the display is first shifted one position ("scroll").
+// The unit to update is identified by `app_cursor`. 
+// If the cursor is beyond the last unit, the units are first shifted one position to the left ("scroll").
 void app_putpattern(uint8_t pattern) {
   uint8_t * buf = app_charenabled ? drv7s_framebuf : app_linebuf;
-  uint8_t wait = 0;
   // Shift display if cursor is at end
   if( app_cursor>=DRV7S_UNITCOUNT ) {
+    // In charmode, wait before the scroll
+    if( app_charenabled ) delay(app_chartime20ms*20);
+    // Scroll
     for( uint8_t i=1; i<DRV7S_UNITCOUNT; i++ ) buf[i-1] = buf[i];
     app_cursor = DRV7S_UNITCOUNT-1;
-    wait = app_charenabled;
   } 
   // Determine pattern: lookup font
   // Write to driver
   buf[app_cursor] = pattern;
   // Advance cursor
   app_cursor++;
-  // In charmode, wait when there was a scroll
-  if( wait ) delay(app_chartime20ms*20);
 }
 
 
@@ -97,14 +96,15 @@ void app_clear_home() {
 // Does have "dot enabled". Does not change `cursor`.
 void app_putchars(const char *chars) {
   uint8_t i = 0;
+  // If first char is a '.' it is printed as in the font (and not decimal point)
   while( i<DRV7S_UNITCOUNT && *chars!=0 ) {
-    if( i>0 && *chars=='.' ) {
-      drv7s_framebuf[i-1] |= 0x80;
-    } else {
-      drv7s_framebuf[i] = font_get(app_fontid,*chars);
-      i++;
-    }
+    drv7s_framebuf[i] = font_get(app_fontid,*chars);
     chars++;
+    if( *chars=='.' ) {
+      drv7s_framebuf[i] |= 0x80;
+      chars++;
+    }
+    i++;
   }
   while( i<DRV7S_UNITCOUNT ) {
     drv7s_framebuf[i] = 0;  
@@ -285,7 +285,7 @@ uint8_t app_cmd_len[0x20] = {
     0, // ignored                              1C  28  FS   ^\     File Separator
     0, // ignored                              1D  29  GS   ^]     Group Separator
     0, // ignored                              1E  30  RS   ^^     Record Separator
-    0, // ignored                              1F  31  US   ^_     Unit Separator
+    1, // RESET (duplicate of 00)              1F  31  US   ^_     Unit Separator
 };
 
 
@@ -338,6 +338,9 @@ void app_cmd_exec(uint8_t * argv ) {
   } else if( cmd==0x14 ) { // PATTERN-ALL (0x14/20 + pattern + pattern + pattern + pattern)
     // Spec-point: fills display but does not change cusror
     for( uint8_t i=0; i<DRV7S_UNITCOUNT; i++ ) drv7s_framebuf[i] = argv[i+1];
+  } else if( cmd==0x1f ) { // RESET (0x1F/31)
+    // Duplicate of 0x00 (in case the host can not send 0x00)
+    app_reset();
   }
 }
 
@@ -347,27 +350,32 @@ void app_cmd_exec(uint8_t * argv ) {
 ////////////////////////////////////////////////////////////
 
 
-// Enable Serial for incoming characters.
-// Enable 7-Segment driver (timer based interrupt service routine)
-void setup() {
-  // Setup serial
-  Serial.begin(115200);
-  Serial.println("\n\n" APP_LONGNAME " (" APP_NAME ")" );
-
-  // Setup driver and app
-  drv7s_setup();
-  app_reset();
-
-  // Welcome banner
-  app_putchars(APP_NAME);
-}
-
-
 // Some incoming characters are actually a command, optionally with some arguments (extra characters).
 #define APP_CMD_BUFSIZE  5 // Size for command buffer; biggest command (PATTERN-ALL) must fit.
 #define APP_CMD_ARGC     (app_cmd_len[app_cmd_argv[0]]) // The number of bytes required for the command in app_cmd_argv[0].
 uint8_t app_cmd_argv[APP_CMD_BUFSIZE]; // At index 0 the command, next its arguments. Note on startup this hold command 0 with len 0.
 uint8_t app_cmd_argc;  // Number of bytes for app_cmd_argv[0] that are already collected
+
+
+// Enable Serial for incoming characters.
+// Enable 7-Segment driver (timer based interrupt service routine)
+void setup() {
+  // Setup serial
+  Serial.begin(115200);
+  Serial.println("\n\n" APP_LONGNAME " (" APP_NAME ") version " APP_VERSION);
+
+  // Setup driver and app
+  drv7s_setup();
+  app_reset();
+
+  // LED test and welcome banner
+  app_putchars("8.8.8.8.");
+  delay(500);
+  app_putchars(APP_NAME);
+
+  // No command pending
+  app_cmd_argc = APP_CMD_ARGC;
+}
 
 
 // Process characters coming in from Serial. 
