@@ -41,7 +41,7 @@ Here are two examples of using SSoS via its USB port, connected to a PC, using P
 
 Simple example:
 
-```
+```python
 import serial
 import time
 
@@ -105,7 +105,7 @@ Just before every scroll step, the system actually pauses (a configurable CHAR-T
 This results in a smooth scroll, assuming the host feeds characters faster than CHAR-TIME.
 
 Downsides of character mode is speed (due to CHAR-TIME) and partial display updates. This is where line mode comes in.
-In **line mode**, all (displayable) characters are appended to the line buffer.
+In **line mode**, all (displayable) characters are appended to an internal line buffer.
 The line buffer also has size 4, so if more characters are fed, it also scrolls, but without a delay and not visible.
 The host needs to send a LINE-COMMIT (`\n`) to copy the line buffer to the frame buffer.
 
@@ -165,7 +165,7 @@ The table at the start of this section (last column) shows the defaults RESET ef
 
 Note that on power-up, the device performs a reset
 but also prints its name (SSoS). 
-So a CLEAR-AND-HOME as a first command makes sense.
+So a CLEAR-AND-HOME (or a RESET) as a first command makes sense.
 
 #### Example
 
@@ -191,7 +191,7 @@ The second command `b'\08.8.8.8.'` is a LED test: it switches on all 8 LEDs in a
 When using the escape sequence `\0` to reset, make sure not to append digits:
 `\075` does not reset and print `75`, it sends the octal character 075 (decimal 61) or `=`.
 In this case, use `\00075` (the `\000` is the RESET command in octal), or use hex (`\x0075`),
-or, a bit of a hack, write `\0.75` (SSoS will not print the `.` when there is no character).
+or, a bit of a hack, write `\0.75` (SSoS will not print the `.` when there is no character before it).
 
 
 
@@ -199,12 +199,12 @@ or, a bit of a hack, write `\0.75` (SSoS will not print the `.` when there is no
 ### 0x01 SET-FONT(id)
 The control character SET-FONT sets the font used for new incoming characters.
 
-The font is selected with the next byte, the font **id**.
+The font is selected with the argument, the font **id**.
 The device supports two fonts: 0 selects _LookAlike7s_ and 1 _Unique7s_.
 Font _LookAlike7s_ is optimized for readability and _Unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
 See the section on fonts for details.
 
-Note that the argument byte is taken "mod 2" so `\x00`, `0`, `L`, or `l` all select _LookAlike7s_, and `\x01`, `1`, `U`, or `u` all select _Unique7s_.
+Note that the argument is taken "mod 2" so `\x00`, `0`, `L`, or `l` all select _LookAlike7s_, and `\x01`, `1`, `U`, or `u` all select _Unique7s_.
 
 The default value is 0 or _LookAlike7s_.
 
@@ -220,10 +220,12 @@ The default value is 0 or _LookAlike7s_.
 
 ![dD5S default (LookAlike7s)](cmd0x01-lookalike.png) ![dD5S Unique7s](cmd0x01-unique.png) ![Both](cmd0x01-both.png)
 
- - First example: after reset we have a readable font (LookAlike7s).
- - Second example: `\1u` uses octal for command 1 and `u` as argument.
+ - First example: after reset we have a readable font (LookAlike7s). We can clearly read the `d`, `D`, `5` and `S`, but not tell them apart.
+ - Second example: `\1u` uses octal for command 1 and `u` as argument. All characters are now different, but `D` and `S` are harder to read.
  - Third example: `\x01U` uses hex for command 1 and `U` respectively `L` as argument.
-   Note that the fonts are used while "writing" changing the font afterwards does not change the looks of characters already written.
+   Note that the fonts are used while "writing"; 
+   changing the font afterwards does not change the looks of characters already written:
+   the Unique7S `S` stays.
 
 
 
@@ -231,12 +233,12 @@ The default value is 0 or _LookAlike7s_.
 ### 0x02 SET-BRIGHTNESS(level)
 The control character SET-BRIGHTNESS sets the brightness of the 7-segment units.
 
-The SSoS deploys a form of PWM (fast flashing) to implement brightness.
+The SSoS device deploys a form of PWM (very fast flashing) to implement brightness.
 Every 7-segment unit is processed 5 ms so one frame takes 4units×5ms or 20 ms.
-During this 5ms, the unit is switched on 1, 2, 3, 4 or 5 ms, and this determines the brightness.
+During this 5ms, each unit is switched on 1, 2, 3, 4 or 5 ms, and this determines the brightness.
 
-The **level** is set with the argument byte, ranging from dark (1) up to and including bright (5).
-Note that the argument byte is taken "mod 16" so `\x01` has the same result as `1`, `A`, or `a`, and `\x05` has the same result as `5`, `E` or `e`.
+The **level** is set with the argument, ranging from dark (1) up to and including bright (5).
+Note that the argument is taken "mod 16" so `\x01` has the same result as `1`, `A`, or `a`, and `\x05` has the same result as `5`, `E` or `e`.
 Values lower than 1 are clipped to 1, values higher than 5 clipped to 5.
 
 The default value is 0x04 or 4/5 or 80%.
@@ -269,11 +271,11 @@ As argument we pass a digit (eg `4`) instead of the byte (`\x04`). Both work.
 The control character SET-BLINK-MASK determines _which_ units blink when blinking is enabled.
 
 For a display unit to blink the following settings need to be considered
- - a mask determining which units blink (instead of always on).
+ - a mask determining which units blink, instead of being always on (SET-BLINK-MASK);
  - the blinking hi and lo times (SET-BLINK-TIMES);
- - global blink enable (BLINK-ENABLE/BLINK-DISABLE);
+ - global blink enable (BLINK-ENABLE/BLINK-DISABLE).
 
-The **mask** is set with the argument byte, only the lower 4 bits are considered.
+The **mask** is set with the argument, only the lower 4 bits are considered.
 When bit `i` from the mask is 1, unit `i` will blink - if blinking is globally enabled.
 When the bit is 0, unit `i` is (always) on.
 
@@ -296,12 +298,12 @@ The default value is 0x0F or 15 or 0b1111 or all units blink.
 
 ![After reset](cmd0x03-noblink.png) ![blink enable](cmd0x03-1111.png) ![blink middle](cmd0x03-0110.png) ![blink sides](cmd0x03-1001.png) ![blink disable](cmd0x03-noblink.png)
 
-- After reset the display is not blinking.
+- After reset, the display is not blinking.
 - The default blink mask is 0b1111 (all units) and the default blink time is one second.
   After `\a` (or `\x07`) all units start to blink 500ms on, 500ms off.
 - Mask 0x06 or 0b0110 is applied, so only middle two units blink.
 - Mask 0x09 or 0b1001 is applied, so only side units blink.
-- Command `\v` (or `\0x0b`) disables blinking.
+- Command `\v` (or `\0x0b`) disables blinking at the end.
 
 
 
@@ -311,10 +313,10 @@ The control character SET-BLINK-TIMES determines the hi time (unit on) and lo ti
 
 See SET-BLINK-MASK for all blinking settings to be considered.
 
-This control character requires two argument bytes **hi** and **lo**.
+This control character requires two arguments **hi** and **lo**.
 The *hi* argument determines the unit on-time (in 20ms steps).
 The *lo* argument determines the unit off-time (in 20ms steps).
-Both arguments must be positive (not zero), and together they should be below 256.
+Both arguments must be positive (not zero), and together they should be below 256 (or clipping will happen).
 
 The default values are 0x19 and 0x19, or 25 and 25 or 500 ms and 500 ms (25×20ms).
 
@@ -340,12 +342,19 @@ The default values are 0x19 and 0x19, or 25 and 25 or 500 ms and 500 ms (25×20m
 
 
 ### 0x05 SHOW-STRINGS(id0,id1)
-The device has a list of internal values. Each value is given an id from 0 to 41.
-The control character SHOW-STRINGS will show a series of those values on the display.
-This is typically a development/debug feature.
+SHOW-STRINGS is a development/debug feature.
 
-This control character requires two argument bytes **id0** and **id1**.
-The control character SHOW-STRINGS will momentarily (2 sec per string) show the values from index **id0** up to (and including) index **id1**.
+The SSoS device has a list of internal settings, some static (firmware version) some dynamic (current font). 
+Each setting consists of a name and a value.
+The names and values are referred to as "strings", and all strings have an (integer) id.
+The names have an even id (starting at 0) and the values and odd id.
+Setting number `n` has thus two id's `2n` for its name and `2n+1` for its value.
+
+The SHOW-STRINGS can show a series of strings by passing the start and end id.
+There are 20 settings, so an id ranges from 0 to 41.
+
+This command requires two arguments **id0** and **id1**.
+The control character SHOW-STRINGS will momentarily (2 sec per string) show the strings from index **id0** up to (and including) index **id1**.
 The upper limit is clipped to the highest id.
 See separate section below for a list of strings.
 
@@ -360,14 +369,14 @@ This command will not change the state, cursor position and frame buffer are lef
 ```
 
 - The example resets SSoS and puts `-8` on the screen.
-  Note that unit 0 has `-` or pattern 0b0100_000 or 0x40, unit 1 has pattern 0b0111_111 or 0x7F.
+  Note that unit 0 has `-` or pattern 0b0100_000 or 0x40 and unit 1 has pattern 0b0111_111 or 0x7F.
   Note also that the cursor is at unit 2.
-- Next the example asks for strings 0x18 to 0x23.
-- Next we get for 1 second the string 0x18; the abbreviated _name_ of "Content of display unit (frame buf) 0"  
+- The example asks for showing strings 0x18 to 0x23.
+- Next we get for 2 second the string 0x18; the abbreviated _name_ of "Content of display unit (frame buf) 0"  
   ![dsp.0](cmd0x05-dsp.0.png)
-- Next we get for 1 second the string 0x19; the _value_ of "Content of display unit (frame buf) 0"  
+- Next we get for 2 second the string 0x19; the _value_ of "Content of display unit (frame buf) 0"  
   ![dsp.0](cmd0x05-0x40.png)
-- And so on, we get the following strings on the device, each for one second
+- We get the following strings on the device, each for two seconds.
   ```text
   DSP.0 0x40
   DSP.1 0x7F
@@ -411,7 +420,8 @@ Strings
 
 
 ### 0x06 CURSOR-RIGHT
-The control character CURSOR-RIGHT moves cursor right (if not already at after right-most position 4).
+The control character CURSOR-RIGHT moves the cursor one position to the right
+(if not already at after right-most position 4).
 
 See also CURSOR-LEFT, CURSOR-EOLN, and CURSOR-HOME.
 
@@ -446,7 +456,8 @@ See "0x03 SET-BLINK-MASK(mask)".
 
 
 ### 0x08 (`\b`) CURSOR-LEFT
-The control character CURSOR-LEFT moves the cursor left (if not already at left-most position 0).
+The control character CURSOR-LEFT moves the cursor one position to the left
+(if not already at left-most position 0).
 
 See also CURSOR-RIGHT, CURSOR-EOLN, and CURSOR-HOME.
 
@@ -473,7 +484,7 @@ See also CURSOR-RIGHT, CURSOR-EOLN, and CURSOR-HOME.
 
 
 ### 0x09 (`\t`) CURSOR-EOLN
-The control character CURSOR-EOLN moves cursor to the right-most position (position 4).
+The control character CURSOR-EOLN moves the cursor to the right-most position (position 4).
 This is convenient for printing right aligned (e.g. numbers).
 
 See also CURSOR-LEFT, CURSOR-RIGHT, and CURSOR-HOME.
@@ -499,7 +510,7 @@ See also CURSOR-LEFT, CURSOR-RIGHT, and CURSOR-HOME.
 ### 0x0A (`\n`) LINE-COMMIT
 The control character LINE-COMMIT is ignored in character mode (CHAR_ENABLE).
 When line mode is enabled (CHAR_DISABLE), an explicit LINE-COMMIT must be given to show the line.
-See model section for description.
+See model section for detaild explanation.
 
 By default character mode is enabled.
 
@@ -522,13 +533,15 @@ By default character mode is enabled.
 
 ![character](cmd0x0A-cter.png) ![mode](cmd0x0A-mode.png) ![line](cmd0x0A-line.png) ![line](cmd0x0A-line.png) ![yes](cmd0x0A-yes.png)
 
-- After reset, SSoS is in character mode.
-- `character` slowly scrolls in from right to left, the screen shows `cter`.
-- The `\n` from the previous command is ignored, so the ` mode` scrolls the `cter` to the left.
+- After reset, the SSoS device is in character mode.
+- `character` slowly scrolls in from right to left, the screen shows `cter` at the end.
+- The `\n` from the previous command is ignored, so the second text (` mode`) scrolls the `cter` to the left.
 - Switch to line mode `\x11` does nothing to the display.
 - `line` appears instantaneously: no scrolling (so the `now ` part is not seen).
 - The `yes` does not appear at first, there is no `\n` to commit that line.
-- Three seconds later the `yes` line is committed. Note that a `\n` also clears the line, so there is a blank after the `s` of `yes`.
+- Three seconds later the `yes` line is committed. Note that a `\n` also clears the rest of the line on the display, 
+  so there is a blank after the `s` of `yes`.
+- As a general rule: in character mode _start_ each write with `\f` and in line mode _end_ each write with `\n`.
 
 
 
@@ -569,6 +582,7 @@ The control character CLEAR-AND-HOME clears the screen (i.e. the frame/line buff
 - The next write `b=2` scrolls out the `a=1`. This is not only slow, but also leave the `1` on the screen.
 - The final write shows the use of CLEAR-AND-HOME (`\f` or `\0x0C`): 
   it clears the screen so `c=2` appears immediately on the screen, no scrolling, no left-overs.
+- As a general rule: in character mode _start_ each write with `\f` and in line mode _end_ each write with `\n`.
 
 
 
@@ -626,13 +640,12 @@ By default dot replacement is enabled.
 
 - After reset mode is "dot replacement enabled". 
   All `.` characters will be replaced by switching on the decimal point of the 7-segment unit.
-  Note that all writes start with a cleared display (`\f`).
-- So the dots in `2.7` and `.E.F.G.H.` get replaced (except the dot at the beginning of `.E.F.G.H.` - there is no previous character).
+- The dots in `2.7` and `.E.F.G.H.` get replaced (except the dot at the beginning of `.E.F.G.H.` - there is no previous character).
 - Next the mode changes to "dot replacement disabled" with command `0x0E`.
   All `.` characters will be rendered in their own 7-segment unit.
-- The dots in `2.7` and `.E.F.G.H.` do not replaced. This makes `2.7` three units long.
-  It makes `.E.F.G.H.I.` nine units long, so that scrolls (after reset character mode is active).
-- The `0x0F` enabled dot replacement, so the `2.7` comes out with the decimal point.
+- The dots in `2.7` and `.E.F.G.H.` are not replaced. This makes `2.7` three units long.
+  It makes `.E.F.G.H.I.` nine units long, so that scrolls (after reset, character mode is active).
+- The `0x0F` enables dot replacement again, so the final `2.7` comes out with the decimal point again.
 
 
 
@@ -650,7 +663,8 @@ See "0x0E DOT-DISABLE"
 
 
 ### 0x10 CHAR-ENABLE
-The control character CHAR-ENABLE enables character mode (as opposed to line mode, see CHAR-DISABLE). See Model section for details.
+The control character CHAR-ENABLE enables _character mode_ (as opposed to _line mode_, see CHAR-DISABLE). 
+See Model section for details, but the summary: in character mode received characters scrolls the display.
 When character mode is enabled, make sure the CHAR-TIME is set as desired.
 
 Note that the device throttles reception of characters, so care should be taken not too send too many characters from the host.
@@ -689,9 +703,8 @@ In my case, the last characters `'nopqrstuvwxyz"` are lost, 58 are received.
 
 
 ### 0x11 CHAR-DISABLE
-Disables character mode (and thus enables line mode).
-
-The control character CHAR-DISABLE (disables character mode and thus) enables line mode. See Model section for details.
+The control character CHAR-DISABLE (disables _character mode_ and thus) enables _line mode_. 
+See Model section for details, but the summary: in line mode received characters are buffered in an internal line buffer and are copied to the display when `\n` is received.
 When line mode is enabled, make sure to send a LINE-COMMIT (`\n`) at the end of each line.
 
 By default character mode is enabled.
@@ -727,13 +740,14 @@ The above code does not overflow the reception buffer, so the SSoS device can ke
 
 
 ### 0x12 CHAR-TIME(time)
-The control character CHAR-TIME sets the wait time per character scrolled (in 20ms increments).
+The control character CHAR-TIME sets the wait time per character scrolled in character mode (in 20ms increments).
 
-The **time** is set with the argument byte, ranging from no delay (0) up to max delay (255×20ms).
+The **time** is set with the argument, ranging from no delay (0) up to max delay (255×20ms).
 The argument may be 0.
 
 For a smooth scroll on an empty display (to be more precise, when the cursor is 0), 
-it is advised to start the message with 4 spaces, because the scroll delay is only applied when there is a _scroll_ of a character.
+it is advised to start the message with 4 spaces, because the scroll delay is only applied when there is a _scroll_ of a character, 
+i.e. when a character is received and the cursor is 4.
 
 The default value is 0x19, or 25, or 500 ms (25×20ms).
 
@@ -754,17 +768,17 @@ The default value is 0x19, or 25, or 500 ms (25×20ms).
 
 
 ### 0x13 PATTERN-ONE(pat)                                                                                        
-The control character PATTERN-ONE adds a raw pattern to the display at the cursor position (instead of looking up a pattern from an ASCII value in the font).
+The control character PATTERN-ONE adds a raw pattern to the display at the current cursor position (instead of looking up a pattern from an ASCII value in the font).
 
-The **pat** is passed with the argument byte, a bit mask indicating which segments to switch on. 
+The **pat** is passed with the argument, a bit mask indicating which segments to switch on. 
 Traditionally, the segments are labeled A-G (and P for the decimal point) in a clockwise fashion.
 The bits of **pat** map to those segments in order:
 
 ![segments](segments.png)
 
-In other words, the character `1` typically switches on segments B and C, mapping to pattern 0b00000110, so the argument byte would be 0x06.
+In other words, the character `1` typically switches on segments B and C, mapping to pattern 0b00000110, so the argument would be 0x06.
 
-This control sequence inserts a character in the flow, so it moves the cursor and optionally scrolls.
+This command inserts a character in the flow, so it moves the cursor and optionally scrolls.
 
 #### Example
 
@@ -785,7 +799,7 @@ The control character PATTERN-ALL adds a raw pattern to the complete display (al
 
 The **p0**, **p1**, **p2**, and **p3** are the raw patterns for units 0 to 3 respectively.
 
-This control sequence directly accesses the frame buffer; it does not use the cursor, nor the line buffer.
+This command directly accesses the frame buffer; it does not use the cursor, nor the line buffer.
 
 #### Example
 
