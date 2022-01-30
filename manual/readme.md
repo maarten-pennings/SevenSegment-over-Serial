@@ -2,6 +2,39 @@
 
 This is the user manual of the "Seven Segment over Serial", also known by its short name **SSoS**.
 
+[Introduction](#introduction)  
+[Getting Started](#getting-started)  
+[Examples](#examples)  
+[Model](#model)  
+[Control-characters](#control-characters)  
+ . . . . [0x00 RESET](#0x00-reset)  
+ . . . . [0x01 SET-FONT(id)](#0x01-set-fontid)  
+ . . . . [0x02 SET-BRIGHTNESS(level)](#0x02-set-brightnesslevel)  
+ . . . . [0x03 SET-BLINK-MASK(mask)](#0x03-set-blink-maskmask)  
+ . . . . [0x04 SET-BLINK-TIMES(hi,lo)](#0x04-set-blink-timeshilo)  
+ . . . . [0x05 SHOW-STRINGS(id0,id1)](#0x05-show-stringsid0id1)  
+ . . . . [0x06 CURSOR-RIGHT](#0x06-cursor-right)  
+ . . . . [0x07 (\a) BLINK-ENABLE](#0x07-a-blink-enable)  
+ . . . . [0x08 (\b) CURSOR-LEFT](#0x08-b-cursor-left)  
+ . . . . [0x09 (\t) CURSOR-EOLN](#0x09-t-cursor-eoln)  
+ . . . . [0x0a (\n) LINE-COMMIT](#0x0a-n-line-commit)  
+ . . . . [0x0b (\v) BLINK-DISABLE](#0x0b-v-blink-disable)  
+ . . . . [0x0c (\f) CLEAR-AND-HOME](#0x0c-f-clear-and-home)  
+ . . . . [0x0d (\r) CURSOR-HOME](#0x0d-r-cursor-home)  
+ . . . . [0x0e DOT-DISABLE](#0x0e-dot-disable)  
+ . . . . [0x0f DOT-ENABLE](#0x0f-dot-enable)  
+ . . . . [0x10 CHAR-ENABLE](#0x10-char-enable)  
+ . . . . [0x11 CHAR-DISABLE](#0x11-char-disable)  
+ . . . . [0x12 CHAR-TIME(time)](#0x12-char-timetime)  
+ . . . . [0x13 PATTERN-ONE(pat)](#0x13-pattern-onepat)  
+ . . . . [0x14 PATTERN-ALL(p0,p1,p2,p3)](#0x14-pattern-allp0p1p2p3)  
+ . . . . [0x1f RESET](#0x1f-reset)  
+[Fonts](#fonts)  
+[Strings](#strings)  
+
+
+
+
 
 ## Introduction
 
@@ -122,7 +155,7 @@ For example `2.7` can show as on the left (DOT-ENABLE) or on the right (DOT-DISA
 
 ## Control characters
 
-The below table gives an overview of all control characters ("SSoS commands"); 
+The below table gives an overview of all control characters, the "SSoS commands"; 
 details are in the subsections below.
 Most subsections come with an example, the [source](examples/examples.py) is available in this repo.
 
@@ -184,7 +217,7 @@ So a CLEAR-AND-HOME (or a RESET) as a first command makes sense.
 
 ![HI](cmd0x00-HI.png) ![test](cmd0x00-test.png) ![\00075](cmd0x00-75.png) ![\x0075](cmd0x00-75.png) ![\0.75](cmd0x00-75.png)
 
-`\0HI` resets (clears screen, homes cursor) and prints HI.
+`\0HI` resets (clears screen, homes cursor) and prints `HI`.
 
 The second command `b'\08.8.8.8.'` is a LED test: it switches on all 8 LEDs in all 4 units.
 
@@ -790,7 +823,7 @@ This command inserts a character in the flow, so it moves the cursor and optiona
 ![A=a](cmd0x13-A=a.png)
 
  - The command 0x13 (PATTERN-ONE) gets as pattern 0x49 or 0b01001001, so segments 0/A, 3/D, and 6/G are on.
- - The PATTERN-ONE inserts a this pattern into the flow (moving the cursor).
+ - The PATTERN-ONE inserts this pattern into the flow (moving the cursor).
 
 
 
@@ -853,7 +886,7 @@ The cells with red marks have visual duplicates.
 ## Strings
 
 The table below enumerates all strings that command 0x05 `SHOW-STRINGS(id0,id1)` can show.
-The odd entries are the actual values, the even values just before them a 4 letter description.
+The odd entries are the setting _values_, the even entries just before them their _name_.
 
  |ID(hex)|ID(dec)| String                                            |
  |:-----:|:-----:|:--------------------------------------------------|
