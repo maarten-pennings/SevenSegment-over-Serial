@@ -39,5 +39,35 @@ There is an extensive [user manual](manual) with examples (as implemented by the
 ## LEGO enclosure 
 todo
 
+## LEGO demo
+
+```python
+# Seven Segment over Serial
+import hub
+import utime
+
+port = hub.port.F
+port.mode( hub.port.MODE_FULL_DUPLEX )
+utime.sleep_ms(500)
+port.baud(115200)
+port.write( b"\0") # reset
+
+i = 0
+while i < 1234 :
+    port.write( b"\f"+str(i/10))
+    utime.sleep_ms(100)
+    i += 7
+port.write( b"\fdone")
+
+utime.sleep_ms(2000)
+port.write( b"\x11") # line mode
+
+i = 0
+while i < 1234 :
+    port.write( b"\t"+str(i/10)+"\n")
+    utime.sleep_ms(100)
+    i += 7
+port.write( b"done\n")
+```
 
 (end)
