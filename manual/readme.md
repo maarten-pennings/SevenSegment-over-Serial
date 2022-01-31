@@ -39,12 +39,12 @@ This is the user manual of the "Seven Segment over Serial", also known by its sh
 ## Introduction
 
 The Seven Segment over Serial device consists of 4 seven segment displays controlled by a micro-controller (an Arduino Nano).
-It's key features are
+Its key features are
 
  - Two built-in fonts: one for optimal readability and one where all characters have unique looks.
  - Support of brightness control and blinking.
  - Support for character mode (scrolling) and line mode (commit line at a time).
- - Control of cursor position (home, left, right, clear).
+ - Control of cursor position (home, left, right, eoln).
  - Composing raw patterns on the 7-segment unit(s).
  - Dot replacement (how to render the dot in `2.7`) 
  - State monitoring (show internal state temporarily on the display).
@@ -55,16 +55,16 @@ It's key features are
 Starting with SSoS is relatively easy. 
  - Hook it up the a host (3V3,GND) and connect host TX to SSoS RX
  - Configure UART on host as 8/N/115200.
- - If the host powers or resets the board, make sure to wait 2 sec before sending commands (SSoS needs 2 seconds to boot).
-   It shows a LED test  
+ - If the host powers or resets the board, make sure to wait 2 sec before sending strings: SSoS needs 2 seconds to boot.
+   The SSoS module first lests all LEDs  
    ![LED test](cmd0x00-test.png)  
-   and then its name  
+   and then shows its name  
    ![name](SSoS.png)
  - Issue a write over serial: 
    ```python
    write("\f    Hello, world!    ")
    ```
- - This should clear the screen (`\f`) and scroll in "Hello, World!" and scroll that out.
+ - This should clear the screen (`\f`) and scroll in "Hello, World!", and scroll that out (due to the four trailing spaces).
    The `W` will be a bit hard to read (and maybe also the `!`)
 
 
@@ -86,15 +86,15 @@ ssos.write( b'\0HI')
 
 ![HI](cmd0x00-HI.png)
 
-On a PC the DTR line causes a reset; if we pull it low, the boot is faster
+On a PC the (high) DTR line causes a reset; if we pull it low, the boot is faster
 
 ```python
 import serial
 
 ssos = serial.Serial(None,115200) # port=None, so not yet opened
 ssos.dtr = False # Makes sure the board does not reset (would take 2 seconds)
-ssos.port='COM3' # Specify port
-ssos.open()      # Now open (fast)
+ssos.port ='COM3' # Specify port
+ssos.open() # Now open (fast)
 
 ssos.write( b'\0HI')
 ```
@@ -112,42 +112,42 @@ character is dropped, and the right-most unit is freed. Then frame buffer locati
 the incoming character. The cursor remains at 4.
 
 When a character is received by the device, its ASCII value if first converted to a 7-segment **pattern**
-by looking it up in the current **font**. It is the pattern that is stored in the frame buffer.
+by looking it up in the current **font**. It is the _pattern_ that is stored in the frame buffer, not the _ASCII_ value.
 So changing the font does not alter the screen content that is already present.
-Two fonts are available _LookAlike7s_ for optimal readability and _Unique7s_ where characters have unique looks. 
-For example, `dD5S` shows as follows (_LookAlike7s_ on the left, _Unique7s_ on the right):
+Two fonts are available: _LookAlike7s_ for optimal readability and _Unique7s_ where characters have unique looks. 
+For example, `dD5S` shows as follows with _LookAlike7s_ on the left and _Unique7s_ on the right:
 
 ![dD5S with LookAlike7s](cmd0x01-lookalike.png) ![dD5S with Unique7s](cmd0x01-unique.png)
 
-Note that the fonts only support ASCII. The 7-segment pattern associated by a **high "ASCII" value** `128+i`, 
+Note that the fonts only support ASCII. The 7-segment pattern associated by a **high "ASCII"** value `128+i`, 
 is the pattern associated with ASCII value `i` but with the (decimal) dot also switched on. Note that 
-_none_ of the patterns below 128 have the (decimal) dot on, so this makes all character patterns unique (in _unique7s_).
+_none_ of the patterns below 128 have the (decimal) dot on, so this makes all character patterns unique (in _Unique7s_).
 
 Also note that the fonts do not associate patterns with ASCII values below 32. 
-Those character are not displayable, instead those are **control characters** changing the state of the SSoS device. 
+Those characters are not displayable, instead those are **control characters** changing the state of the SSoS device. 
 For example, the FF (Form Feed) character in ASCII (hex value 0C, decimal value 12, in C with `\f`) 
 will clear the frame buffer and set the cursor to 0.
 Other codes will change the font, brightness, blinking, dot replacement or (scrolling) mode. Some
-of the control codes need to be followed by extra bytes, e.g. to pass the font ID.
+of the control codes need to be followed by arguments (extra bytes), e.g. to pass the font ID.
 
 The device can operate in two modes: character (default) and line. In **character mode**, each 
 (displayable) character is immediately appended to the frame buffer and is thus visible. 
 As noted above, if the cursor was at position 4, this causes a scroll. 
 Scrolling is a nice feature for strings longer than 4, and this is where character mode is useful.
-Just before every scroll step, the system actually pauses (a configurable CHAR-TIME).
+Just before every scroll step, the system actually pauses several tens of milliseconds (configurable as CHAR-TIME).
 This results in a smooth scroll, assuming the host feeds characters faster than CHAR-TIME.
 
 Downsides of character mode is speed (due to CHAR-TIME) and partial display updates. This is where line mode comes in.
 In **line mode**, all (displayable) characters are appended to an internal line buffer.
 The line buffer also has size 4, so if more characters are fed, it also scrolls, but without a delay and not visible.
-The host needs to send a LINE-COMMIT (`\n`) to copy the line buffer to the frame buffer.
+The host needs to send a LINE-COMMIT (`\n`) to copy the line buffer to the frame buffer to make it visible.
 
 The device has a limited reception buffer. Care should be taken not too send too many characters from the host.
 This will overflow the internal reception buffer, causing **loss of received bytes**. 
 This is more likely in character mode than in line mode due to the delays in scrolling.
 
-The device is also capable of showing the **dot** (`.`) on a 7-segment unit of its own or using the dot-segment of the previous 7-segment.
-For example `2.7` can show as on the left (DOT-ENABLE) or on the right (DOT-DISABLE).
+The device is also capable of showing the **dot** (`.`) on a 7-segment unit of its own or using the dot-segment of the previous unit.
+For example `2.7` can show as on the left (dot replacment enabled) or on the right (dot replacement disabled).
 
 ![enabled](cmd0x0E-2.7.png) ![disabled](cmd0x0E-2-7.png)
 
@@ -155,9 +155,11 @@ For example `2.7` can show as on the left (DOT-ENABLE) or on the right (DOT-DISA
 
 ## Control characters
 
-The below table gives an overview of all control characters, the "SSoS commands"; 
-details are in the subsections below.
+The below table gives an overview of all control characters, the "SSoS commands"; details are in the subsections below.
+
 Most subsections come with an example, the [source](examples/examples.py) is available in this repo.
+
+The right-most column shows the defaults for all settings (in hex).
 
  | HEX | DEC | NAME | KEY |C-ESC | ASCII description               | SSoS command                                         |default (hex)|
  |:---:|:---:|:----:|:---:|:----:|:--------------------------------|:-----------------------------------------------------|------------:|
@@ -165,7 +167,7 @@ Most subsections come with an example, the [source](examples/examples.py) is ava
  |  01 |   1 |  SOH |  ^A |      | Start of Heading                | [SET-FONT(id)](#0x01-set-fontid)                     |          00 |  
  |  02 |   2 |  STX |  ^B |      | Start of Text                   | [SET-BRIGHTNESS(level)](#0x02-set-brightnesslevel)   |          04 |  
  |  03 |   3 |  ETX |  ^C |      | End of Text                     | [SET-BLINK-MASK(mask)](#0x03-set-blink-maskmask)     |          0F |  
- |  04 |   4 |  EOT |  ^D |      | End of Transmission             | [SET-BLINK-TIMES(hi,lo)](#0x04-set-blink-timeshilo)  |       19,19 |  
+ |  04 |   4 |  EOT |  ^D |      | End of Transmission             | [SET-BLINK-TIMES(hi,lo)](#0x04-set-blink-timeshilo)  |19,19 (×20ms)|  
  |  05 |   5 |  ENQ |  ^E |      | Enquiry                         | [SHOW-STRINGS(id0,id1)](#0x05-show-stringsid0id1)    |           - |  
  |  06 |   6 |  ACK |  ^F |      | Acknowledgment                  | [CURSOR-RIGHT](#0x06-cursor-right)                   |           - |  
  |  07 |   7 |  BEL |  ^G | `\a` | Bell (beep or the flash)        | [BLINK-ENABLE](#0x07-a-blink-enable)                 |          no |  
@@ -179,7 +181,7 @@ Most subsections come with an example, the [source](examples/examples.py) is ava
  |  0F |  15 |  SI  |  ^O |      | Shift In                        | [DOT-ENABLE](#0x0f-dot-enable)                       |         yes |  
  |  10 |  16 |  DLE |  ^P |      | Data Link Escape                | [CHAR-ENABLE](#0x10-char-enable)                     |         yes |  
  |  11 |  17 |  DC1 |  ^Q |      | Device Control 1 (often XON)    | [CHAR-DISABLE](#0x11-char-disable)                   |          no |  
- |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | [CHAR-TIME(time)](#0x12-char-timetime)               |          19 |  
+ |  12 |  18 |  DC2 |  ^R |      | Device Control 2                | [CHAR-TIME(time)](#0x12-char-timetime)               |   19 (×20ms)|  
  |  13 |  19 |  DC3 |  ^S |      | Device Control 3 (often XOFF)   | [PATTERN-ONE(pat)](#0x13-pattern-onepat)             |           - |  
  |  14 |  20 |  DC4 |  ^T |      | Device Control 4                | [PATTERN-ALL(p0,p1,p2,p3)](#0x14-pattern-allp0p1p2p3)|           - |  
  |  1F |  31 |  US  |  ^_ |      | Unit Separator                  | [RESET](#0x1f-reset)                                 |           - |
@@ -194,14 +196,14 @@ Most subsections come with an example, the [source](examples/examples.py) is ava
 The control character RESET will reset all settings to their default.
 This includes clear screen and cursor home.
 
-The command 0x1F is identical, it is added to support hosts that 
-are not able to send a zero-byte 0x00 (a C `printf` might suffer from this).
-
 The table at the start of this section (last column) shows the defaults RESET effectuates.
 
 Note that on power-up, the device performs a reset
 but also prints its name (SSoS). 
 So a CLEAR-AND-HOME (or a RESET) as a first command makes sense.
+
+The command [0x1F](#0x1f-reset) is identical to command 0x00, it is added to support hosts that 
+are not able to send a zero-byte 0x00 (a C `printf` might suffer from this).
 
 #### Example
 
@@ -229,8 +231,6 @@ When using the escape sequence `\0` to reset, make sure not to append digits:
 In this case, use `\00075` (the `\000` is the RESET command in octal), or use hex (`\x0075`),
 or, a bit of a hack, write `\0.75` (SSoS will not print the `.` when there is no character before it).
 
-The command `\x1f` is equal to `\x00`: it [RESET](#0x1f-reset)s.
-
 
 
 ### 0x01 SET-FONT(id)
@@ -241,7 +241,7 @@ The device supports two fonts: 0 selects _LookAlike7s_ and 1 _Unique7s_.
 Font _LookAlike7s_ is optimized for readability and _Unique7s_ guarantees that each character has a unique look (pattern on the 7-segment display).
 See the section on [Fonts](#fonts) for details.
 
-Note that the argument is taken "mod 2" so `\x00`, `0`, `L`, or `l` all select _LookAlike7s_, and `\x01`, `1`, `U`, or `u` all select _Unique7s_.
+Note that the argument byte is taken "mod 2" so `\x00`, `0`, `L`, or `l` all select _LookAlike7s_, and `\x01`, `1`, `U`, or `u` all select _Unique7s_.
 
 The default value is 0 or _LookAlike7s_.
 
@@ -275,7 +275,7 @@ Every 7-segment unit is processed 5 ms so one frame takes 4units×5ms or 20 ms.
 During this 5ms, each unit is switched on 1, 2, 3, 4 or 5 ms, and this determines the brightness.
 
 The **level** is set with the argument, ranging from dark (1) up to and including bright (5).
-Note that the argument is taken "mod 16" so `\x01` has the same result as `1`, `A`, or `a`, and `\x05` has the same result as `5`, `E` or `e`.
+Note that the argument byte is taken "mod 16" so `\x01` has the same result as `1`, `A`, or `a`, and `\x05` has the same result as `5`, `E` or `e`.
 Values lower than 1 are clipped to 1, values higher than 5 clipped to 5.
 
 The default value is 0x04 or 4/5 or 80%.
@@ -307,7 +307,7 @@ As argument we pass a digit (eg `4`) instead of the byte (`\x04`). Both work.
 ### 0x03 SET-BLINK-MASK(mask)
 The control character SET-BLINK-MASK determines _which_ units blink when blinking is enabled.
 
-For a display unit to blink the following settings need to be considered
+For a display unit to blink the following settings need to be considered:
  - a mask determining which units blink, instead of being always on ([SET-BLINK-MASK](#0x03-set-blink-maskmask));
  - the blinking hi and lo times ([SET-BLINK-TIMES](#0x04-set-blink-timeshilo));
  - global blink enable ([BLINK-ENABLE](#0x07-a-blink-enable)/[BLINK-DISABLE](#0x0b-v-blink-disable)).
@@ -340,7 +340,7 @@ The default value is 0x0F or 15 or 0b1111 or all units blink.
   After `\a` (or `\x07`) all units start to blink 500ms on, 500ms off.
 - Mask 0x06 or 0b0110 is applied, so only middle two units blink.
 - Mask 0x09 or 0b1001 is applied, so only side units blink.
-- Command `\v` (or `\0x0b`) disables blinking at the end.
+- Command `\v` (or `\0x0b`) disables blinking.
 
 
 
@@ -372,23 +372,23 @@ The default values are 0x19 and 0x19, or 25 and 25 or 500 ms and 500 ms (25×20m
 
 - The `ABCD` are shown blinking 500ms on, 500ms off (1Hz).
   This is after reset, so mask is 0b1111 (all digits).
-- Next the frequency is turned up to 200ms on and 200ms off (10×20ms), so 2.5Hz.
-- We switch back to 1Hz but a different duty cycle: 400ms on and 100ms off.
+- Next, the frequency is turned up to 200ms on and 200ms off (10×20ms), so 2.5Hz.
+- We keep the 2.5Hz but at a different duty cycle: 400ms on and 100ms off.
 - In the final step that is reversed 100ms on and 400ms off.
 
 
 
 ### 0x05 SHOW-STRINGS(id0,id1)
-SHOW-STRINGS is a development/debug feature.
+SHOW-STRINGS is a development/debug feature, not typically used in normal operation.
 
-The SSoS device has a list of internal settings, some static (firmware version) some dynamic (current font). 
-Each setting consists of a name and a value.
+The SSoS device has a list of internal settings, some static (application firmware version) some dynamic (current font). 
+Each _setting_ consists of a _name_ and a _value_ (e.g. name `APP` and value `5.5`).
 The names and values are referred to as "strings", and all strings have an (integer) id.
-The names have an even id (starting at 0) and the values and odd id.
+The names have an _even_ numbered id (starting at 0) and the associated value the _odd_ id immediatly following it.
 Setting number `n` has thus two id's `2n` for its name and `2n+1` for its value.
 
 The SHOW-STRINGS can show a series of strings by passing the start and end id.
-There are 20 settings, so an id ranges from 0 to 41.
+There are 21 settings, so an id ranges from 0 to 41.
 
 This command requires two arguments **id0** and **id1**.
 The control character SHOW-STRINGS will momentarily (2 sec per string) show the strings from index **id0** up to (and including) index **id1**.
@@ -407,9 +407,9 @@ This command will not change the state, cursor position and frame buffer are lef
 
 - The example resets SSoS and puts `-8` on the screen.
   Note that unit 0 has `-` or pattern 0b0100_000 or 0x40 and unit 1 has pattern 0b0111_111 or 0x7F.
-  Note also that the cursor is at unit 2.
+  Note also that the cursor is at unit 2. The two remaining units are empty, i.e. have pattern 0x00.
 - The example asks for showing strings 0x18 to 0x23.
-- Next we get for 2 second the string 0x18; the abbreviated _name_ of "Content of display unit (frame buf) 0"  
+  We get for 2 second the string 0x18; the abbreviated _name_ of "Content of display unit (frame buf) 0"  
   ![dsp.0](cmd0x05-dsp.0.png)
 - Next we get for 2 second the string 0x19; the _value_ of "Content of display unit (frame buf) 0"  
   ![dsp.0](cmd0x05-0x40.png)
@@ -458,7 +458,7 @@ Strings
 
 ### 0x06 CURSOR-RIGHT
 The control character CURSOR-RIGHT moves the cursor one position to the right
-(if not already at after right-most position 4).
+(if not already at the right-most position 4).
 
 See also [CURSOR-LEFT](#0x08-b-cursor-left), [CURSOR-EOLN](#0x09-t-cursor-eoln), and [CURSOR-HOME](#0x0d-r-cursor-home).
 
@@ -494,7 +494,7 @@ See [SET-BLINK-MASK](#0x03-set-blink-maskmask).
 
 ### 0x08 (`\b`) CURSOR-LEFT
 The control character CURSOR-LEFT moves the cursor one position to the left
-(if not already at left-most position 0).
+(if not already at the left-most position 0).
 
 See also [CURSOR-RIGHT](#0x06-cursor-right), [CURSOR-EOLN](#0x09-t-cursor-eoln), and [CURSOR-HOME](#0x0d-r-cursor-home).
 
@@ -650,9 +650,8 @@ See also [CURSOR-RIGHT](#0x06-cursor-right), [CURSOR-LEFT](#0x08-b-cursor-left),
 
 
 ### 0x0E DOT-DISABLE
-The control character DOT-DISABLE disables dot replacement. 
-See [Model](#model) section for details (see also [DOT-ENABLE](#0x0f-dot-enable)).
-In summary:  all `.` characters will be rendered in their own 7-segment unit according to the font.
+The control character DOT-DISABLE disables dot replacement (see also [DOT-ENABLE](#0x0f-dot-enable)).
+All `.` characters will be rendered in their own 7-segment unit according to the font, see [Model](#model) section for details.
 
 By default dot replacement is enabled.
 
@@ -690,9 +689,8 @@ By default dot replacement is enabled.
 
 
 ### 0x0F DOT-ENABLE
-The control character DOT-ENABLE enables dot replacement. 
-See [Model](#model) section for details (see also [DOT-DISABLE](#0x0e-dot-disable)).
-In summary: all `.` characters will be replaced by switching on the decimal point of the 7-segment unit.
+The control character DOT-ENABLE enables dot replacement (see also [DOT-DISABLE](#0x0e-dot-disable)).
+All `.` characters will be replaced by switching on the decimal point of the 7-segment unit, see [Model](#model) section for details.
 
 By default dot replacement is enabled.
 
@@ -864,8 +862,9 @@ This command directly accesses the frame buffer; it does not use the cursor, nor
 
 ### 0x1F RESET
 
-Identical to command 0x00. This command is added to support hosts that 
+The command 0x1F is identical to command [0x00](#0x00-reset), it is added to support hosts that 
 are not able to send a zero-byte 0x00 (a C `printf` might suffer from this).
+
 
 #### Example
 
@@ -877,8 +876,6 @@ are not able to send a zero-byte 0x00 (a C `printf` might suffer from this).
 ```
 
 ![HI](cmd0x00-HI.png) ![\x0075](cmd0x00-75.png)
-
-The command `\x1f` is equal to `\x00`: it [RESET](#0x00-reset)s.
 
 
 
