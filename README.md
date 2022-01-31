@@ -9,20 +9,22 @@ I immediately thought that such a thing would be a nice external display for the
 does not have a display - at least not one that can display bigger numbers. But I want it smaller to better fit LEGO.
 
 Later I found that [sparkfun](https://learn.sparkfun.com/tutorials/using-the-serial-7-segment-display/all) has something similar.
+Also a bit too wide to my liking, adn _retired_.
 
 
 ## Font
-There is a [python script](font) to generate font tables.
+There is a [python script](font) to generate font tables. 
+I designed two fonts, one _LookAlike7s_ with characters that are as close as possible to the real thing.
+The second font _Unique7s_ maps each character to a unique pattern on the 7-segment display.
 
 
 ## Electronics
-Design of the [electronics](electronics) (PCB).
+Design of the [electronics](electronics): the power architecture, display control, wiring (used pins), schematics, and finally PCB.
 
 
 ## ISR model
-Modeling the [interrupt service routine (ISR)](isr).
+Modeling the [interrupt service routine (ISR)](isr). The ISR needs to support brightness control and blinking.
 The model is made in Python, but in the end, the ISR is the central part of the ATmega firmware, driving the 7-segments.
-The ISR needs to support brightness control and blinking.
 
 
 ## Firmware
@@ -31,7 +33,7 @@ First some proof of concept sketches, finally the [end-product](firmware/SSoS).
 
 
 ## User manual
-The [user manual](manual) for the [end-product](firmware/SSoS). is available.
+There is an extensive [user manual](manual) with examples (as implemented by the firmware for the [end-product](firmware/SSoS)).
 
 
 ## LEGO enclosure 
