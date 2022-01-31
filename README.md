@@ -9,7 +9,7 @@ I immediately thought that such a thing would be a nice external display for the
 does not have a display - at least not one that can display bigger numbers. But I want it smaller to better fit LEGO.
 
 Later I found that [sparkfun](https://learn.sparkfun.com/tutorials/using-the-serial-7-segment-display/all) has something similar.
-Also a bit too wide to my liking, adn _retired_.
+This board is also a bit too wide to my liking, and _retired_.
 
 
 ## Font
@@ -29,7 +29,7 @@ The model is made in Python, but in the end, the ISR is the central part of the 
 
 ## Firmware
 The [firmware](firmware) for the Arduino Nano, the controller on the SSoS board.
-First some proof of concept sketches, finally the [end-product](firmware/SSoS).
+First some proof of concept sketches (using SFRs for ports, timer, ISR), finally the [end-product](firmware/SSoS).
 
 
 ## User manual
