@@ -91,7 +91,7 @@ The breadboard prototype works, but the LEGO mindstorms 3V3 is on the edge.
 ![Breadboard](breadboard.jpg)
 
 
-## PCB production.
+## PCB production
 
 
 I used [EasyEda](https://easyeda.com) to design a PCB.
@@ -104,13 +104,28 @@ The output voltage is a bit low, so I decided to reserve room for a [boost conve
 
 Next comes layout.
 
-![top](SSoS-top.png)
+![PCB rendered top](SSoS-top.png)
 
-![bottom](SSoS-bottom.png)
+![PCB rendered bottom](SSoS-bottom.png)
 
 The final step is to generate the [gerber](Gerber_SSoS.zip) file.
 I sent those to [JLCPCB](https://jlcpcb.com/).
 Five PCBs for €1.77 plus €3.84 shipping (3 weeks).
+
+This is what came back.
+
+![PCB actual top](pcb-front.jpg)
+
+![PCB actual bottom](pcb-back.jpg)
+
+The result after mounting the components (you can't even see the SMDs anymore).
+
+![Module actual top](module-front3.jpg)
+
+![Module actual bottom](module-back3.jpg)
+
+- I should have rotated the Nano board (USB connector on the outside).
+- I should have made better provisions for the LEGO connector.
 
 
 ## References 
