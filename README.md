@@ -41,33 +41,72 @@ todo
 
 ## LEGO demo
 
+### Numbers
+This is a simple demo that print numbers first flush left, then flush right.
+
+Note that the SSoS device is connected to port F of the hub.
+That port is first configured as serial, next the host baudrate is set to match the one used in the SSoS device.
+Note that the `mode` command actually "adds" the `baud` attribute. 
+However the `mode` takes some time, so we must have a wait in between.
+
+The flush left number are printed in character mode (using a CLEAR-AND-HOME `\f`).
+The flush right number are printed in line mode, using a CURSOR-EOLN `\t` for flush right and a LINE-COMMIT `\n`.
+
 ```python
-# Seven Segment over Serial
+# Number demo with Seven Segment over Serial
 import hub
 import utime
 
-port = hub.port.F
-port.mode( hub.port.MODE_FULL_DUPLEX )
+ssos = hub.port.F
+ssos.mode( hub.port.MODE_FULL_DUPLEX )
 utime.sleep_ms(500)
-port.baud(115200)
-port.write( b"\0") # reset
+ssos.baud(115200)
+ssos.write( b"\0") # Reset SSoS device
 
 i = 0
 while i < 1234 :
-    port.write( b"\f"+str(i/10))
+    ssos.write( b"\f"+str(i/10))
     utime.sleep_ms(100)
     i += 7
-port.write( b"\fdone")
+ssos.write( b"\fdone")
 
 utime.sleep_ms(2000)
-port.write( b"\x11") # line mode
+ssos.write( b"\x11") # line mode
 
 i = 0
 while i < 1234 :
-    port.write( b"\t"+str(i/10)+"\n")
+    ssos.write( b"\t"+str(i/10)+"\n")
     utime.sleep_ms(100)
     i += 7
-port.write( b"done\n")
+ssos.write( b"done\n")
+```
+
+### Motor
+This is a simple demo that print the motor position (when rotated y hand).
+
+Note that the SSoS device is connected to port F of the hub.
+Here we use a more elegant way instead of waiting 500ms after mode, we wait till the `baud` appears.
+
+The motor is connected to port E.
+The `get()` function by default reports a list of 4 numbers, 
+index 2 returns "Absolute position in degrees between -180 and +179" 
+(this is [mode 3](https://lego.github.io/MINDSTORMS-Robot-Inventor-hub-API/class_motor.html#Motor)).
+
+```python
+# Show motor position on Seven Segment over Serial
+import hub
+
+ssos = hub.port.F
+ssos.mode( hub.port.MODE_FULL_DUPLEX )
+while not hasattr(ssos, 'baud') : pass # Wait till `ssos` is serial port
+ssos.baud(115200)
+ssos.write( b"\0") # Reset SSoS device
+ssos.write( b"\x11") # line mode
+
+motor = hub.port.E.motor
+while True:
+    angle = motor.get()[2]
+    ssos.write( b"\t"+str(angle)+"\n" )
 ```
 
 (end)
