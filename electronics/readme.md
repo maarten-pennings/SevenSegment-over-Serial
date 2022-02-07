@@ -125,7 +125,9 @@ The result after mounting the components (you can't even see the SMDs anymore).
 ![Module actual bottom](module-back3.jpg)
 
 - I should have rotated the Nano board (USB connector on the outside).
-- I should have made better provisions for the LEGO connector.
+- I should have made better provisions for the IDC connector towards the LEGO Mindstorms hub.
+- I maybe should have spaced the transistors to match holes for technic pins.
+- This design is now 8×4×2 studs, which does not match LEGO's philosophy of having an odd number of studs in the technic world.
 
 
 ## References 
