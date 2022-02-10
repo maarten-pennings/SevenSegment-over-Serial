@@ -37,7 +37,7 @@ There is an extensive [user manual](manual) with examples (as implemented by the
 
 
 ## LEGO enclosure 
-todo
+I 3D-printed an [enclosure](enclosure) so that I can use SSoS with LEGO Mindstorms.
 
 ## LEGO demo
 
