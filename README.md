@@ -7,6 +7,8 @@ See a [video](https://youtu.be/2fTZVQPiG7E) of the device in action.
 
 ![SSoS for LEGO](enclosure/assembled-cable.jpg)
 
+![Connected to the hub](enclosure/assembled-mounted.jpg)
+
 ## Introduction
 I stumbled on this module [Seven Segment for micro:bit](http://www.monkmakes.com/mb_7_seg.html).
 I immediately thought that such a thing would be a nice external display for the new LEGO Mindstorms Robot Inventor - it

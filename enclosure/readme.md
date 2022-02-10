@@ -59,5 +59,9 @@ and with the cable
 
 ![Assembled with cable](assembled-cable.jpg)
 
+connected to the hub.
+
+![Connected to the hub](assembled-mounted.jpg)
+
 (end)
 
