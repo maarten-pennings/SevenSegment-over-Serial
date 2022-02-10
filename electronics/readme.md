@@ -124,10 +124,35 @@ The result after mounting the components (you can't even see the SMDs anymore).
 
 ![Module actual bottom](module-back3.jpg)
 
+Observations:
+
 - I should have rotated the Nano board (USB connector on the outside).
 - I should have made better provisions for the IDC connector towards the LEGO Mindstorms hub.
-- I maybe should have spaced the transistors to match holes for technic pins.
-- This design is now 8×4×2 studs, which does not match LEGO's philosophy of having an odd number of studs in the technic world.
+- I maybe should have spaced the transistors to match holes for LEGO Technic pins.
+- This design is now 8×4×2 studs, which does not match LEGO's philosophy of having an odd number of studs in the Technic world.
+
+## IDC connector
+
+I always confuse myself with the pin-out of the connectors: male and female, front and back view.
+
+This is the LEGO hub pinout
+
+![hub pinout](pinout-hub.jpg)
+
+I have one LEGO (power functions 2, powered up, spike prime, robot inventor, control +) 
+to IDC cable. There are several sizes, I use [2×3 6P](https://www.aliexpress.com/item/4001257530318.html).
+
+![IDC cable](LEGO-IDC-cable.jpg)
+
+So, the SSoS module needs this wiring on the IDC socket. 
+Here is an example of matching [2×3 6P](https://www.aliexpress.com/item/1005001400147026.html) socket.
+
+![IDC pinout](pinout-IDC.jpg)
+
+This is the PCB end result.
+
+![Module actual bottom](module-idc.jpg)
+
 
 
 ## References 
