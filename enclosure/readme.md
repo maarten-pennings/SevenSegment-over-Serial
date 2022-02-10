@@ -38,11 +38,11 @@ The bottom closed the enclosure.
 
 Here is the STL file for the
 
-[top](![STL top](3dmodel-A-1.png)).
+[![STL top](3dmodel-A-1.png)](case-top.stl).
 
 Here is the STL file for the
 
-[bottom](![STL bottom](3dmodel-B-1.png)).
+[![STL bottom](3dmodel-B-1.png)](case-bottom.stl).
 
 
 ## 3D print results
