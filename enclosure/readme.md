@@ -37,17 +37,19 @@ The bottom closed the enclosure.
 ## STL files
 
 Here is the STL file for the
+[top](case-top.stl)
 
 [![STL top](3dmodel-A-1.png)](case-top.stl).
 
 Here is the STL file for the
+[bottom](case-bottom.stl)
 
 [![STL bottom](3dmodel-B-1.png)](case-bottom.stl).
 
 
 ## 3D print results
 
-The top and bottom for the PCB.
+The 3D printed top and bottom and the PCB.
 
 ![Components](assemble.jpg)
 
