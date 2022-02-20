@@ -26,6 +26,7 @@ The second font _Unique7s_ maps each character to a unique pattern on the 7-segm
 
 ## Electronics
 Design of the [electronics](electronics): the power architecture, display control, wiring (used pins), schematics, and finally PCB with IDC socket.
+My project on EasyIDE is [public](https://oshwlab.com/maartenpennings/ssos).
 
 
 ## ISR model

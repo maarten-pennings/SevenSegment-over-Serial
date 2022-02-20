@@ -107,6 +107,7 @@ The breadboard prototype works, but the LEGO mindstorms 3V3 is on the edge.
 ## PCB production
 
 I used [EasyEDA](https://easyeda.com) to design a PCB.
+My project is [public](https://oshwlab.com/maartenpennings/ssos).
 First step was to make [schematics](Schematic_SSoS.pdf).
 
 I intend to use SSoS for LEGO Mindstorms.
@@ -185,6 +186,7 @@ Here the SSoS module is in [action](https://youtu.be/2fTZVQPiG7E) in a simple ro
 
 ## References 
 
+ - [This project](https://oshwlab.com/maartenpennings/ssos)
  - [Arduino Nano description](https://www.arduino.cc/en/pmwiki.php?n=Main/ArduinoBoardNano)
  - [Arduino Nano schematics](https://www.arduino.cc/en/uploads/Main/ArduinoNano30Schematic.pdf)
  - [ATmega168 information (and datasheet)](https://www.microchip.com/en-us/product/ATmega168)
