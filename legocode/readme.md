@@ -78,4 +78,6 @@ while True:
     ssos.write( b"\t"+str(angle)+"\n" )
 ```
 
+![motor](motor.jpg)
+
 (end)

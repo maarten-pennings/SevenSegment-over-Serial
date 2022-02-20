@@ -1,12 +1,23 @@
 # Electronics
 
-Electronic design of the SSoS board.
+Seven-Segment over Serial (SSoS) module: a device consisting of four 7-segment display units, 
+controllable via a serial link, to be usable as display for LEGO Mindstorms Robot Inventor or Spike Prime.
+
+This section is about the electronics of the SSoS board, 
+design made with [EasyEDA](https://easyeda.com/) and manufactured by [JLCPCB](https://jlcpcb.com/).
+
+For firmware, fonts, enclosure, user manual, LEGO code, see parent [page](..).
+
 
 ## Arduino Nano power architecture
 
+The heart of SSoS module is an Arduino Nano. We need to power it from LEGO hub port, that is 3V3.
+Is that possible? The diagram is a high level view of the 
+[schematics](https://www.arduino.cc/en/uploads/Main/ArduinoNano30Schematic.pdf) of a Nano, focusing on power.
+
 ![Arduino Nano power architecture](power.png)
 
-The Nano can be powered via
+A Nano can be powered via
  - the `USB` connector;
  - 6 to 20V _unregulated_ external power supply (pin 30, `VIN`) - it is regulated internally (by V-reg); 
  - 5V _regulated_ external power supply (pin 27, `+5V`).
@@ -16,17 +27,19 @@ Note that
  - the `+5V` (pin 27) can be used as output, provided the Nano is powered via `USB` or `VIN`;
  - `VUSB` is not pinned out;
  - the "power" LED is connected to the internal 5V rail;
- - a diode protects a USB host in case the Nano is inadvertently connected via `USB` and `+5V`;
+ - a diode protects a USB host in case the Nano is inadvertently connected via `USB` and `VIN`/`+5V`;
  - according to the datasheet the operating voltage is 2.7V-5.5V for Atmel ATmega48/88/168.
- - this means that we can use pin 27 `+5V` also as input, provided weer attach a _regulated_ power in the range 2.7V-5.5V.
+ - this means that we can use pin 27 `+5V` also as input, provided we attach a _regulated_ power in the range 2.7V-5.5V.
 
 **Conclusion**
-We power the board by connecting pin 27 (`+5V`) to the external host.
+We power the board by connecting pin 27 (`+5V`) to the external host (LEGO hub).
 This is fine as long as the external host a "standard" regulated voltage (e.g. 3V3 or 5V). 
 It also means that the logic pins, e.g. the incoming `RX` will have the host level.
 
 
 ## Display control
+
+How does the Nano control the four seven-segment units?
 
 According to the ATmega48/88/168 datasheet:
  - each I/O port can **source** more than the test conditions (20mA at VCC = 5V, **10mA** at VCC = 3V)
@@ -44,16 +57,16 @@ So, sourcing 8 LEDs via 8 output pins is fine, as long as each LED gets 10mA max
 Sinking 8 LEDs via 1 output port is **not** ok, that would be 80mA where the max is 10mA.
 
 **Conclusion**
-We connect the four 7-segment displays in a row/column fashion. 
+We connect the four seven-segment displays in a row/column fashion. 
 The individual segments ("rows") can be hooked directly to an output pin of the ATmega, provided that the current limiting resistor limits the LED current and thus the sourcing via the pin to 10mA.
 The commons of the display ("columns"), need to sink, worst case, all 8 LED segments of a display unit. As a result, we use a transistor.
 The principle is depicted below, for the real schematic see section below.
 
 ![Display control](col-row.png)
 
-I decided to have current limiting resistors of 220 ohm.
+I decided to have current limiting resistors of 220 ohm for the LEDs.
 Red LEDs have a forward voltage of Vf=1.8. 
-With an external voltage of 3V3, the resistor drops 1.5V, leading to a current of 6.8mA for one segment and 55mA for all 8.
+With an external voltage of 3V3, the resistor drops 1.5V (3.3-1.8), leading to a current of 6.8mA for one segment and 55mA for all 8.
 With an external voltage of 5V0, the resistor drops 3.2V, leading to a current of 14.5mA for one segment and 116mA for all 8.
 
 | VCC | V_R (V)| I_R (mA) R=220Ω | I_common (mA) 8 LEDs |
@@ -93,16 +106,19 @@ The breadboard prototype works, but the LEGO mindstorms 3V3 is on the edge.
 
 ## PCB production
 
-
-I used [EasyEda](https://easyeda.com) to design a PCB.
+I used [EasyEDA](https://easyeda.com) to design a PCB.
 First step was to make [schematics](Schematic_SSoS.pdf).
 
 I intend to use SSoS for LEGO Mindstorms.
-The output voltage is a bit low, so I decided to reserve room for a [boost converter](https://www.aliexpress.com/item/32762622485.html):
+The output voltage is a bit low, so I decided to reserve room for a [boost converter](https://www.aliexpress.com/item/32762622485.html).
+In either case the host connects to J1.
  - Host has regulated power in the range of 3-6V: connect Vreg/GND/SER of J1.
  - Otherwise mount buck or boost regulator on J2 and connect Vunr/GND/SER of J1
 
-Next comes layout.
+Next comes layout in [EasyEDA](https://easyeda.com).
+I wanted a small board, so used SMDs for the resistors, and populated the board on both sides.
+Note that soldering will be a bit tricky: the Nano and seven-segment hold each other in a "brace".
+Here the renders of the top and bottom of the PCB.
 
 ![PCB rendered top](SSoS-top.png)
 
@@ -110,9 +126,10 @@ Next comes layout.
 
 The final step is to generate the [gerber](Gerber_SSoS.zip) file.
 I sent those to [JLCPCB](https://jlcpcb.com/).
-Five PCBs for €1.77 plus €3.84 shipping (3 weeks).
+For small quantities JLCBCP is great value fort money: 
+five PCBs for €1.77 plus €3.84 shipping (3 weeks to Europe).
 
-This is what came back.
+This is what came back - I tried the new PCB color purple :-)
 
 ![PCB actual top](pcb-front.jpg)
 
@@ -124,41 +141,64 @@ The result after mounting the components (you can't even see the SMDs anymore).
 
 ![Module actual bottom](module-back3.jpg)
 
-Observations:
+Possible improvements:
 
 - I should have rotated the Nano board (USB connector on the outside).
 - I should have made better provisions for the IDC connector towards the LEGO Mindstorms hub.
 - I maybe should have spaced the transistors to match holes for LEGO Technic pins.
 - This design is now 8×4×2 studs, which does not match LEGO's philosophy of having an odd number of studs in the Technic world.
 
+
 ## IDC connector
 
 I always confuse myself with the pin-out of the connectors: male and female, front and back view.
 
-This is the LEGO hub pinout
+This is the LEGO hub pinout.
 
 ![hub pinout](pinout-hub.jpg)
 
 I have one LEGO (power functions 2, powered up, spike prime, robot inventor, control +) 
-to IDC cable. There are several sizes, I use [2×3 6P](https://www.aliexpress.com/item/4001257530318.html).
+to IDC cable, I use [2×3 6P](https://www.aliexpress.com/item/4001257530318.html).
 
 ![IDC cable](LEGO-IDC-cable.jpg)
 
-So, the SSoS module needs this wiring on the IDC socket. 
 Here is an example of matching [2×3 6P](https://www.aliexpress.com/item/1005001400147026.html) socket.
+The SSoS module needs this wiring on the IDC socket. 
 
 ![IDC pinout](pinout-IDC.jpg)
 
-This is the PCB end result.
+This is the PCB end-result - with the socket glued...
 
 ![Module actual bottom](module-idc.jpg)
 
 
+## Final product
+
+Elsewhere in the [project](..), you find the firmware for the Nano, and the STL for the LEGO case.
+This is how the encased PCB-with-cable looks like.
+
+![encased](../enclosure/assembled-cable.jpg)
+
+Here the SSoS module is in [action](https://youtu.be/2fTZVQPiG7E) in a simple robot.
+
+![motor](../legocode/motor.jpg)
 
 ## References 
 
  - [Arduino Nano description](https://www.arduino.cc/en/pmwiki.php?n=Main/ArduinoBoardNano)
  - [Arduino Nano schematics](https://www.arduino.cc/en/uploads/Main/ArduinoNano30Schematic.pdf)
  - [ATmega168 information (and datasheet)](https://www.microchip.com/en-us/product/ATmega168)
+ - [LEGO connector on Philo's site](https://www.philohome.com/wedo2reverse/connect.htm)
+ - [EasyEDA](https://easyeda.com)
+ - [JLCPCB](https://jlcpcb.com/)
+ - [AliExpress](https://www.aliexpress.com/)
+    - [Nano](https://www.aliexpress.com/item/32969876875.html)
+    - [LEGO cable](https://www.aliexpress.com/item/32871195908.html)
+    - [7 segment common cathode](https://www.aliexpress.com/item/33058771440.html)
+    - [IDC plug 2×3 6P](https://www.aliexpress.com/item/4001257530318.html)
+    - [IDC socket 2×3 6P](https://www.aliexpress.com/item/1005001400147026.html)
+    - [SMD resistors](https://www.aliexpress.com/item/32865947306.html)
+    - [Capacitor](https://www.aliexpress.com/item/1005002842732971.html)
+    - [Transistor](https://www.aliexpress.com/item/1005003363864621.html)
 
 (end)
