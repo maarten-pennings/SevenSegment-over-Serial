@@ -11,9 +11,13 @@ For firmware, fonts, enclosure, user manual, LEGO code, see parent [page](..).
 
 ## Arduino Nano power architecture
 
-The heart of SSoS module is an Arduino Nano. We need to power it from LEGO hub port, that is 3V3.
-Is that possible? The diagram is a high level view of the 
-[schematics](https://www.arduino.cc/en/uploads/Main/ArduinoNano30Schematic.pdf) of a Nano, focusing on power.
+The heart of SSoS module is an Arduino Nano. 
+We need to power it from a LEGO hub port, which is 3V3.
+Is that possible? 
+
+The diagram below is a high level view of the 
+[schematics](https://www.arduino.cc/en/uploads/Main/ArduinoNano30Schematic.pdf) 
+of a Nano, focusing on power.
 
 ![Arduino Nano power architecture](power.png)
 
@@ -111,13 +115,16 @@ My project is [public](https://oshwlab.com/maartenpennings/ssos).
 First step was to make [schematics](Schematic_SSoS.pdf).
 
 I intend to use SSoS for LEGO Mindstorms.
-The output voltage is a bit low, so I decided to reserve room for a [boost converter](https://www.aliexpress.com/item/32762622485.html).
-In either case the host connects to J1.
- - Host has regulated power in the range of 3-6V: connect Vreg/GND/SER of J1.
- - Otherwise mount buck or boost regulator on J2 and connect Vunr/GND/SER of J1
+The output voltage is a bit low, so I decided to reserve room for an optional [boost converter](https://www.aliexpress.com/item/32762622485.html).
+The host always connects to J1.
+ - Host has regulated power in the range of 3-6V: 
+   connect **VR**egulated, **G**round, **S**erial of J1.
+ - Otherwise mount buck or boost regulator on J2 and 
+   connect **G**round, **S**erial, **VU**nregulated of J1
 
 Next comes layout in [EasyEDA](https://easyeda.com).
 I wanted a small board, so used SMDs for the resistors, and populated the board on both sides.
+
 Note that soldering will be a bit tricky: the Nano and seven-segment hold each other in a "brace".
 Here the renders of the top and bottom of the PCB.
 
@@ -127,7 +134,7 @@ Here the renders of the top and bottom of the PCB.
 
 The final step is to generate the [gerber](Gerber_SSoS.zip) file.
 I sent those to [JLCPCB](https://jlcpcb.com/).
-For small quantities JLCBCP is great value fort money: 
+For small quantities JLCBCP is great value for money: 
 five PCBs for €1.77 plus €3.84 shipping (3 weeks to Europe).
 
 This is what came back - I tried the new PCB color purple :-)
