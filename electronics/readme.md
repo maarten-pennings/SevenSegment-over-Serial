@@ -4,9 +4,11 @@ Seven-Segment over Serial (SSoS) module: a device consisting of four 7-segment d
 controllable via a serial link, to be usable as display for LEGO Mindstorms Robot Inventor or Spike Prime.
 
 This section is about the electronics of the SSoS board, 
-design made with [EasyEDA](https://easyeda.com/) and manufactured by [JLCPCB](https://jlcpcb.com/).
+design made with [EasyEDA](https://easyeda.com/) and manufactured by [JLCPCB](https://jlcpcb.com/DMP).
 
 For firmware, fonts, enclosure, user manual, LEGO code, see parent [page](..).
+
+This article received a $50 voucher from [JLCPCB](https://jlcpcb.com/DMP).
 
 
 ## Arduino Nano power architecture
@@ -133,7 +135,7 @@ Here the renders of the top and bottom of the PCB.
 ![PCB rendered bottom](SSoS-bottom.png)
 
 The final step is to generate the [gerber](Gerber_SSoS.zip) file.
-I sent those to [JLCPCB](https://jlcpcb.com/).
+I sent those to [JLCPCB](https://jlcpcb.com/DMP).
 For small quantities JLCBCP is great value for money: 
 five PCBs for €1.77 plus €3.84 shipping (3 weeks to Europe).
 
@@ -199,7 +201,7 @@ Here the SSoS module is in [action](https://youtu.be/2fTZVQPiG7E) in a simple ro
  - [ATmega168 information (and datasheet)](https://www.microchip.com/en-us/product/ATmega168)
  - [LEGO connector on Philo's site](https://www.philohome.com/wedo2reverse/connect.htm)
  - [EasyEDA](https://easyeda.com)
- - [JLCPCB](https://jlcpcb.com/)
+ - [JLCPCB](https://jlcpcb.com/DMP)
  - [AliExpress](https://www.aliexpress.com/)
     - [Nano](https://www.aliexpress.com/item/32969876875.html)
     - [LEGO cable](https://www.aliexpress.com/item/32871195908.html)
