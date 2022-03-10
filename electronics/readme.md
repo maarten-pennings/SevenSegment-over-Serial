@@ -8,7 +8,7 @@ design made with [EasyEDA](https://easyeda.com/) and manufactured by [JLCPCB](ht
 
 For firmware, fonts, enclosure, user manual, LEGO code, see parent [page](..).
 
-This article received a $50 voucher from [JLCPCB](https://jlcpcb.com/DMP).
+This article was awarded a $50 voucher from [JLCPCB](https://jlcpcb.com/DMP).
 
 
 ## Arduino Nano power architecture
