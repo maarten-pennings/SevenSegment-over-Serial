@@ -27,6 +27,7 @@ There is
  - [back](back-3D.png) view  
    ![back](back-3D.png)
  - all files for [ordering](order)
+ - I did make my own 3D model of the [IDC connector](IDC3dModel)
 
 
 ## Considerations
