@@ -212,10 +212,15 @@ Considerations after producing the board:
 
 ## Flashing
 
-The board is back, from 2022-04-17 to 2022-04-23 for production and mounting (5 days) to 2022-05-04, so 18 days for manufacturing and shipping.
+The board is back, from 2022-04-17 to 2022-04-23 for production and mounting (5 days) to 2022-05-04.
+In total 18 days for manufacturing and shipping. 
 
-![SSoSS](flashing/SSoSS.jpg)
+There was one thing to caught me by surprise: the board had two holes I did not put there,
+see the red encircled areas. I guess those are put by JLCPCB to have anchor points 
+for the solder paste mask.
+
+![SSoSS](SSoSS-holes.jpg)
  
-The [flashing](flashing) took some trial.
+The [flashing](flashing) took some trial and error.
  
 (end)

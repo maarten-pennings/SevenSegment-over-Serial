@@ -487,5 +487,9 @@ C:\Users\maarten\Desktop\flashing\ledtest>
 I soldered all resistors at the front side - [JLCPCB](https://jlcpcb.com/DMP) will only mount components
 on one side. I moved a LED around to check that all segments are working - before I solder the 7-segments.
 
+Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the flashing worked.
+
+I still have a problem. After power-on it is not blinking :-(
+
 (end)
 
