@@ -193,17 +193,29 @@ We visit the [JLCPCB](https://jlcpcb.com/DMP) website to prepare our order.
 
 ## Considerations and doubts on the tech side
 
- - I used the ATMega328, not the ATM168 from SSoS, LCSC doesn't have the 168.
- - The ATMega328 on LCSC is very expensive ($10), so I only make two boards.
+Considerations before producing the board:
+ - I used the ATmega328, not the ATM168 from SSoS, LCSC doesn't have the 168.
+ - The ATmega328 on LCSC is very expensive ($10), so I only make two boards.
  - I'm a digital (software) guy, so I have doubts in the analogue domain
-   - Do I have the correct oscillator (I need 8MHZ for ATMega328 at 3V3) - correct capacitance?
+   - Do I have the correct oscillator (I need 8MHZ for ATmega328 at 3V3) - correct capacitance?
    - Are the transistors correct?
    - There is no cap on the RESET# pin.
    - No ground poor.
- - Will ICSP header work; can I program the ATMega328 (with the bootloader, which fuse settings do I need).
  - I will solder J2 (IDC connector) myself, and J1 (ICSP) will not be mounted.
  - I will solder RA..RP myself (JLCPCB can only do one side), they are 0805.
  - I did make my own 3D model of the [IDC connector](IDC3dModel).
+
+Considerations after producing the board:
+ - One LED on the PCB might have been nice for testing bringup.
+ - The ATmega328PB that I took is not nicely supported by Arduino. It works, but an ATmega328P would have been easier.
+
+
+## Flashing
+
+The board is back, from 2022-04-17 to 2022-04-23 for production and mounting (5 days) to 2022-05-04, so 18 days for manufacturing and shipping.
+
+![SSoSS](flashing/SSoSS.jpg)
  
+The [flashing](flashing) took some trial.
  
 (end)
