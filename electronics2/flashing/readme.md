@@ -9,7 +9,7 @@ This page describes how to program the SSoSS board - that is not trivial, becaus
 
 The board that came back from [JLCPCB](https://jlcpcb.com/DMP) has an ATmega328PB straight from the factory.
 In other words, it does _not_ have a bootloader.
-That is the reason I added an [ICSP](https://en.wikipedia.org/wiki/In-system_programming) (Circuit Serial Programming) header to the board.
+That is the reason I added an [ICSP](https://en.wikipedia.org/wiki/In-system_programming) (In-Circuit Serial Programming) header to the board.
 It allows low-level access to the flash.
 
 We need a so-called _programmer_ to connect a PC to the board to program the ATmega328PB.
@@ -46,13 +46,13 @@ First we need a _programmer_.
 We will convert a standard Arduino Nano to a programmer by flashing an appropriate piece of firmware.
 
  - Connect the Nano (the programmer to be) to the PC (using USB).
- - Open the Arduino IDE (I'm using v1.8.13).
+ - Open the Arduino IDE (I'm using 1.8.13, May 2022).
  - In the Tools menu make sure
-   - `Board` is `Nano` (Tools -> Board -> Arduino AVR Boards > Arduino Nano) - an Uno would also work.
+   - `Board` is `Nano` (`Tools -> Board -> Arduino AVR Boards > Arduino Nano`) - an Uno would also work if you have that.
    - `Processor` is `ATmega328P (Old Bootloader)` - maybe yours has the new bootloader.
    - `Port` is `COM5` - or whatever the USB port of your Nano is.
- - Load the programmer sketch: File -> Examples -> 11.ArduinoISP -> ArduinoISP.
- - Compile and upload the programmer sketch by pressing the Upload button (or Sketch > Upload).
+ - Load the programmer sketch: `File -> Examples -> 11.ArduinoISP -> ArduinoISP`.
+ - Compile and upload the programmer sketch by pressing the Upload button (or `Sketch > Upload`).
 
 The Nano is now a programmer.
 
@@ -71,7 +71,7 @@ Connect
 
 ![Wiring](ICSP-wire.png)
 
-This is the pinout of the ICSP header (the dot in the lower right corner of both boards indicates pin 1).
+This is the pinout of the ICSP header (the dot in the lower right corner, of both boards, indicates pin 1).
 
 ```text
             +----+
@@ -90,7 +90,7 @@ There are two options:
  - Use the programmer to flash an **application** to the target.
 
 
-### Flashing the bootloader with the programmer using Arduino IDE
+### Flashing the bootloader using Arduino IDE
 
 We can use the programmer to flash a bootloader.
 We can even do that from the Arduino IDE; I believe this also programs the fuses.
@@ -106,12 +106,12 @@ It is important that the IDE knows the target MCU, so it can flash the appropria
    - `Programmer` must be set `Arduino as ISP` - that is what we just flashed in the Nano.
 
 Now, do not make the mistake to press Upload, that will compile and flash the current (empty?) project
-to the Nano. Instead, we select Tools > Burn Bootloader.
+to the Nano. Instead, we select `Tools > Burn Bootloader`.
 
 ![Burn bootloader](burn-bootloader.png)
 
 I suggest that before you fire up the burning, you select
-File > Preferences > Show verbose output during: > upload. 
+`File > Preferences > Show verbose output during: > upload`. 
 Then this is the result.
 
 ```txt
@@ -182,15 +182,15 @@ Normally, this would work. Unfortunately, we get an error.
 The error is at the end: `Device signature = 0x1e9516 (probably m328pb), Expected signature for ATmega328P is 1E 95 0F`.
 Damn, I put a non-standard ATmega328 on the SSoSS, the PB variant instead of the B variant.
 
-The reason for this is that the B variant was no available at LCSC, but the PB was.
-I did check the differences on [ATmega328PB vs ATmega328P](https://onlinedocs.microchip.com/pr/GUID-CBDC1838-0100-4F26-A45A-134958193C3B-en-US-4/index.html)
+The reason I did this, was that the B variant was not available at LCSC, but the PB variant was.
+I did check the differences of [ATmega328PB vs ATmega328P](https://onlinedocs.microchip.com/pr/GUID-CBDC1838-0100-4F26-A45A-134958193C3B-en-US-4/index.html)
 
 > ATmega328PB is not a drop-in replacement for ATmega328 variants, but a new device. 
 > However, the functions are backward compatible with the existing ATmega328 functions. 
 > Existing code for these devices will work in the new devices without changing existing configuration or enabling new functions. 
 > The code that is available for your existing ATmega328 variants will continue to work on the new ATmega328PB device.
 
-My conclusion back when I selected it: slightly different footprint, buy software wise backward compatible.
+My conclusion back when I selected it: slightly different footprint, but software-wise backward compatible.
 Now I know that the Arduino IDE can't burn the bootloader.
 
 But maybe avrdude can...
@@ -202,9 +202,9 @@ But maybe avrdude can...
 So let's try avrdude.
 
 
-### Flashing the bootloader with the programmer using avrdude
+### Flashing the bootloader using avrdude
 
-The very first line of the upload is as follows (I added line breaks for readability).
+The very first line of the upload in the console is as follows (I added line breaks for readability).
 ```
   C:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17/bin/avrdude 
       -CC:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17/etc/avrdude.conf
@@ -213,36 +213,38 @@ The very first line of the upload is as follows (I added line breaks for readabi
 ```
 
 Let's check the [avrdude manual](https://man.archlinux.org/man/community/avrdude/avrdude.1.en)
-or check [adafruit](https://www.ladyada.net/learn/avr/avrdude.html).
+(or [adafruit](https://www.ladyada.net/learn/avr/avrdude.html)).
 We learn
  - `avrdude` executable is located in `C:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17\bin`.
  - The `-C` passes a config-file that contains all programmer and part definitions that avrdude knows about. 
  - `-v` to enable verbose output.
- - `-p partno` is the only option that is mandatory, we see that `atmega328p` is passed instead of `patmega328pb`. 
+ - `-p partno` is the only option that is mandatory, we see that `atmega328p` is passed instead of `patmega328pb`.  
    This is the **root cuase of the error**.
  - `-c programmer-id`; Atmel's default programmer is the STK500 programmer, and that seems the one being used (in the Nano presumably).
  - `P port` to identify the serial port to which the programmer is attached.
  - `-b baudrate`, bit confusing, we are using SPI, not RS-232 that the avrdude manual mentions.
- - `-e` causes a chip erase to be executed. This is a relevant observation: the entire flash is erased, including any bootloader that might be there.
+ - `-e` causes a chip erase to be executed. This is a relevant observation: 
+   the entire flash is erased, including any bootloader that might be already there.
 
-Next come(s) the important parameter(s) `U` to write to non-volatile memories, here the fuses. 
+Next come the important parameter, the `U`s, to write to non-volatile memories.
+Here the `U`s write the fuses. 
  - There are four of them `lock`, `efuse`, `hfuse`, and `lfuse`.
    The avrdude manual explains: lock is the lock byte, efuse is the extended fuse byte, hfuse is the high fuse byte, lfuse is the low fuse byte.
- - The format after `U` is 
-   - <memtype> is either `flash` or `eeprom`, or `lock`, `hfuse`, `lfuse`, or `efuse`, ...
-   - after the `:` comes  `r`, `w`, or `v` meaning you can use r (read), w (write), or v (verify).
-   - after the next `:` comes a value of a filename.
-   - a final `:` gives the format, important is `m` for immediate value, or `i` for intel hex encoded file.
+ - The argument of `U` is `memtype:op:data:format`
+   - `memtype` is either `flash` or `eeprom`, or `lock`, `hfuse`, `lfuse`, or `efuse`, ...
+   - after the `:` comes `op`: `r`, `w`, or `v` meaning you can use r (read), w (write), or v (verify).
+   - after the next `:` comes data, an inline value or a filename.
+   - a final `:` gives the format, important is `m` for immediate (inline) value, or `i` for intel hex encoded file.
 
 What is the meaning of all those bits? Check this [page](https://circuitdigest.com/microcontroller-projects/understanding-fuse-bits-in-atmega328p-to-enhance-arduino-programming-skills)
-but that is for the ATMega328P, so also check the [ATMega328PB datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/40001906A.pdf).
+for explanation, but it is for the ATMega328P, so also check the [ATMega328PB datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/40001906A.pdf).
 Please note that a 1 means unprogrammed (often the default).
  - lock  0x3F or `0011 1111`  
    The upper four bits protect various aspects of the application flash, the lower 4 bits of the bootloader flash.
    1 means unprogrammed.
  - efuse 0xFD or `1111 1101`  
    The "Extended Fuse" byte only uses the lower 3 to indicate the brownout level.
-   `101` means 2.5..2.9, which sounds good for an 3V3 supply.
+   `101` means 2.5V .. 2.9V, which sounds good for an 3V3 supply.
    The atmega368pb also uses bit 4: CFD (disable Clock Failure Detection).
  - hfuse 0xDA or `1101 1010`  
    The "High Fuse" byte has 8 single bits:
@@ -265,10 +267,10 @@ Ok, this fails, and I do not feel confident about the bits Arduino uses for the 
 But we do not need to burn the bootlader (and the bits), we can also directly flash the application.
 
 
-### Flashing the application with the programmer using avrdude
+### Flashing the application using avrdude
 
-The Tools menu shows (`Board`, `Processor`) how the compiler should build.
-It also shows (`Port`) how the (hidden) avrdude shall communicate to the board when pressing upload (or Sketch > Upload).
+The Tools menu shows how the compiler should build (`Board`, `Processor`).
+It also shows how the (hidden) avrdude shall communicate (`Port`) to the board when pressing upload (or `Sketch > Upload`).
 It also has `Programmer`, this is normally NOT used. It is only used when selecting `Burn Bootlader`.
 
 ![Tools menu](burn-bootloader.png)
@@ -278,16 +280,16 @@ The Sketch menu has an entry I always ignored: Upload Using Programmer.
 
 ![Sketch menu](upload.png)
 
-With the [ledtest](ledtest) sketch loaded in the IDE, and the same settings ain Tools as before
+With the [ledtest](ledtest) sketch loaded in the IDE, and the same settings in Tools as before
  - `Board` is `Arduino Pro or Pro Mini` - this is the board closest to the SSoSS.
  - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it run son 5V).
  - `Port` is the port the programmer is connected to (`COM5` in my example)
  - `Programmer` must be set `Arduino as ISP` - that is what we just flashed in the Nano.
 
-We now try Sketch > Upload Using Programmer.
+We now try `Sketch > Upload Using Programmer`.
 
 I suggest that before you flash, you select
-File > Preferences > Show verbose output during: > upload. 
+`File > Preferences > Show verbose output during: > upload`. 
 Then this is the result.
 
 ```txt
@@ -369,9 +371,9 @@ C:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-ar
 ```
 
 We recognize all parameters from before.
-And indeed the -U is no longer about fuse bits, but about the application hex file `ledtest.ino.hex` in intel hex (`:i`).
+And indeed the `-U` is no longer about fuse bits, but about the application hex file `ledtest.ino.hex` in intel hex (`:i`).
 
-Let's execute this line with `-patmega328pb`. But first we need the hex file. We can do that in the same menu with export.
+Let's execute this line with `-patmega328pb`. But first we need the hex file. We can do that in the same menu with `Export compiled Binary`.
 
 ![export](export.png).
 
@@ -379,9 +381,9 @@ This runs a compile, and saves the hex file in the project dir.
 
 ![project dir](export-dir.png)
 
-I was surprised at first that there are two hex files.
+I was surprised at first that there are _two_ hex files.
  - `ledtest.ino.eightanaloginputs.hex` - this is the `ledtest` application only. 
-    For some reason, the `eightanaloginputs` describes a variant. Not relevant.
+    For some reason, the `eightanaloginputs` describes a variant (not relevant).
  - `ledtest.ino.with_bootloader.eightanaloginputs.hex` - this is the `ledtest` application and the bootloader. 
    If you use ICSP to flash, the entire flash is wiped, so you might want to flash the bootloader.
    If you use TX/RD to flash, the bootloader only flashes the application part, so you need the file without bootloader.
@@ -484,12 +486,14 @@ avrdude done.  Thank you.
 C:\Users\maarten\Desktop\flashing\ledtest>
 ```
 
+And indeed, the small patch of passing the correct MCU ID fixed the problem.
+
 I soldered all resistors at the front side - [JLCPCB](https://jlcpcb.com/DMP) will only mount components
-on one side. I moved a LED around to check that all segments are working - before I solder the 7-segments.
+on one side. I moved a LED around to check that all segments are working - only after a successful test I will solder the 7-segments (they overlay the resistors).
 
 Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the flashing worked.
 
-I still have a problem. After power-on it is not blinking :-(
+I still have a problem. After power-on it does not start :-(
 
 (end)
 
