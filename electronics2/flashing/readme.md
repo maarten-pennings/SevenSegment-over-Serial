@@ -595,12 +595,21 @@ on one side. I moved a LED around to check that all segments are working - only 
 
 Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the flashing worked.
 
-I still have a problem. After power-on it does not start :-(
+## Problems
+
+Looking at the [video of the blinking LED](https://youtu.be/dpqHkJS7RNk) you might think we're done.
+But I still have a problem. The app starts after flashing, but after _power-on_ it doesn't.
 
 Solved it! 
 I changed [icsp.bat](ledtest/icsp.bat) not to flash `ledtest.ino.with_bootloader.eightanaloginputs.hex`, 
 but to flash `ledtest.ino.eightanaloginputs.hex`.
 Without flashing the bootloader the board runs my ledtest app when powered on!
+
+Next, I flashed the official [SSoS firmware](../../firmware) - I added a similar flash script.
+Flashing works, booting works, but the display flickers.
+It is hard to see on the [video](https://youtu.be/p-Qe8X2YwIE)
+My guess: fuses need tweaking to get a faster clock.
+
 
 (end)
 
