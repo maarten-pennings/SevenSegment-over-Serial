@@ -30,7 +30,7 @@ You might wonder what the fuses are. Those are bits in some non-volatile memory 
 
 We can also flash a bootloader (in the lower part of the flash). 
 With that, we no longer need a programmer; a USB-to-serial adapter suffices.
-avrdude sends commands via the serial port to the bootloader running on the target, 
+Avrdude sends commands via the serial port to the bootloader running on the target, 
 those commands flash the user application in the (upper part of the) flash.
 
 This is what most Arduino boards (Uno, Nano) use.
@@ -78,7 +78,7 @@ This is the pinout of the ICSP header (the dot in the lower right corner, of bot
         GND |6  5| RSTn
  MOSI (D11) |4  3| SCK (D13)
         VCC |2  1| MISO (D12)
-            +----+
+            +----+°
 ```         
 
 
@@ -101,7 +101,7 @@ It is important that the IDE knows the target MCU, so it can flash the appropria
  - On the PC we start the Arduino IDE with an empty project.
  - We must setup the correct target in te Tools menu.
    - `Board` is `Arduino Pro or Pro Mini` - this is the board closest to the SSoSS.
-   - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it run son 5V).
+   - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it runs on 5V).
    - `Port` is the port the programmer is connected to (`COM5` in my example)
    - `Programmer` must be set `Arduino as ISP` - that is what we just flashed in the Nano.
 
@@ -236,35 +236,132 @@ Here the `U`s write the fuses.
    - after the next `:` comes data, an inline value or a filename.
    - a final `:` gives the format, important is `m` for immediate (inline) value, or `i` for intel hex encoded file.
 
-What is the meaning of all those bits? Check this [page](https://circuitdigest.com/microcontroller-projects/understanding-fuse-bits-in-atmega328p-to-enhance-arduino-programming-skills)
-for explanation, but it is for the ATMega328P, so also check the [ATMega328PB datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/40001906A.pdf).
-Please note that a 1 means unprogrammed (often the default).
- - lock  0x3F or `0011 1111`  
-   The upper four bits protect various aspects of the application flash, the lower 4 bits of the bootloader flash.
-   1 means unprogrammed.
- - efuse 0xFD or `1111 1101`  
-   The "Extended Fuse" byte only uses the lower 3 to indicate the brownout level.
-   `101` means 2.5V .. 2.9V, which sounds good for an 3V3 supply.
-   The atmega368pb also uses bit 4: CFD (disable Clock Failure Detection).
- - hfuse 0xDA or `1101 1010`  
-   The "High Fuse" byte has 8 single bits:
-   - bit 7 `1` - RSTDISBL (external ReSeT DISabLe) disables the external hardware reset pin. 1 means `unprogrammed` (not active I assume). **Disabling this bit can completely brick your device.**
-   - bit 6 `1` - DWEN (Debug Wire ENable) built-in block used to program/debug with a single wire. You will need special hardware.  1 means `unprogrammed` (not active I assume).
-   - bit 5 `0` - SPIEN (SPI ENable) disables the SPI programming interface, what we use over ICSP. 0 means programmed, i.e. SPI enabled. **Disabling this bit can completely brick your device.**
-   - bit 4 `1` - WDTON (Watch Dog ON) enables the watchdog. 1 means `unprogrammed` (not on I assume).
-   - bit 3 `1` - EESAVE (EEprom SAVE) the EEPROM memory is preserved through chip erase. 1 means `unprogrammed` (EEPROM not preserved).
-   - bit 2,1 `01` - BOOTSZ (BOOT SiZe) boot size refers to the amount of memory reserved for the bootloader. What I do not understand is that the datasheet for the ATMega328PB says the brownout is duplicated here (bits 2,1,0).
-   - bit 0 `0` - BOOTRST (BOOT ReSeT vector) presumably moves the reset vector to the bootloader.
- - lfuse 0xFF or `1111 1111`  
-   The "Low Fuse" byte has four fields
-   - bit 7 `1` - CKDIV8 (Divide clock by 8). 1 means `unprogrammed` (not active I assume).
-   - bit 6 `1` - CKOUT (Clock output) allows the system clock to be output on PORTB0. 1 means `unprogrammed` (not active I assume).
-   - bit 54 `11` - SUT (Start-Up Time)
-   - bit 3210 `1111` - CKSEL (ClocK source SELect). 1111 means "Low Power Crystal Oscillator".
+**Conclusion**: "flashing the bootloader" does not flash the bootloader, it just flashes the fuses. 
 
-Ok, this fails, and I do not feel confident about the bits Arduino uses for the ATMega328P[B?].
+Let's check what the IDE tried to write to the fuses.
 
-But we do not need to burn the bootlader (and the bits), we can also directly flash the application.
+One explanation is on this [page](https://circuitdigest.com/microcontroller-projects/understanding-fuse-bits-in-atmega328p-to-enhance-arduino-programming-skills).
+However, it is for the ATMega328P, so also check the [ATMega328PB datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/40001906C.pdf)
+(do not use the old 2017 revision A datasheet, but at least the 2018 revision C datasheet).
+
+**Please note that one aspect is rather confusing for fuses**: a 1 in a fuse bit is referred to as "unprogrammed". In other words, fuse bits are "low-active".
+
+ - lock to 0x3F or `0011 1111`  
+ 
+   ![lock byte](fuse-lock.png)
+
+   The ATmega328PB uses the lower 6 bits only. 
+   Writing a 0 in one of those 6 activates some lock such as "programming of the Flash and EEPROM is disabled".
+   I don't want or need to lock my firmware - it's on github :-) anyhow.
+   
+   The value 0b0011_1111 or 0x3F makes sense for the lock byte.
+   
+ - efuse to 0xFD or `1111 1101`  
+ 
+   ![efuse byte](fuse-efuse.png)
+
+   The "Extended Fuse" byte has two bit-fields:
+   
+   - bit 3 set to `1` - `CFD` (disable Clock Failure detection). This is "new", i.e. not in ATmega328P.  By default this is 0, programmed, disabled, but the command would enable it.
+   - bit 2,1,0 set to `101` - `BODLEVEL` (Brown-Out LEVEL). The command sets BODLEVEL to `101` meaning 2.5V .. 2.9V, which sounds good for an 3V3 supply.
+     ![efuse byte BODLEVEL](fuse-efuse-BODLEVEL.png)
+   
+   I think I want 0b1111_0101 or 0xF5 for the efuse (also disable CFD).
+   
+ - hfuse to 0xDA or `1101 1010`  
+ 
+   ![hfuse byte](fuse-hfuse.png)
+   
+   The "High Fuse" byte has 7 bit fields:
+   
+   - bit   7 set to `1` - `RSTDISBL` (external ReSeT DISabLe) 
+     disables the external hardware reset pin. 
+     1 means `unprogrammed` (disable not active, so reset enabled). 
+     **Writing 0 can brick your device.**
+     
+   - bit   6 set to `1` - `DWEN` (Debug Wire ENable) 
+     HW feature used to program/debug with a single wire; you will need special hardware.  
+     1 means `unprogrammed` (so not enabled).
+     
+   - bit   5 set to `0` - `SPIEN` (SPI ENable) 
+     enables the SPI programming interface. This is what we use over ICSP. 
+     0 means programmed, i.e. SPI enabled. 
+     **Writing 1 can brick your device.**
+     
+   - bit   4 set to `1` - `WDTON` (Watch Dog ON) 
+     enables the watchdog. 
+     1 means `unprogrammed` (no watchdog).
+     
+   - bit   3 set to `1` - `EESAVE` (EEprom SAVE) 
+     the EEPROM memory is preserved through chip erase. 
+     1 means `unprogrammed` (EEPROM also erased).
+     
+   - bit 2,1 set to `01` - `BOOTSZ` (BOOT SiZe) 
+     refers to the amount of memory reserved for the bootloader. 
+     The command writes `01` to have 16 pages of 64 words or 1024 words (2048 bytes) for the bootloader. 
+     Default is `00` which is **bigger**: 2048 words (4096 bytes).
+     
+     ![hfuse byte BOOTSZ](fuse-hfuse-BOOTSZ.png)
+     
+   - bit   0 set to `0` - `BOOTRST` (BOOT ReSeT vector). 
+     The Reset vector can be moved to the start of the boot Flash section by programming the BOOTRST Fuse. 
+     The command writes `0`, i.e. using the bootloader area.
+     
+     ![hfuse byte BOOTRST](fuse-hfuse-BOOTRST.png)
+   
+   I think I want 0b1101_1110 or 0xDE for the hfuse (smallest space for bootloader).
+   
+ - lfuse to 0xFF or `1111 1111`  
+ 
+   ![lfuse byte](fuse-lfuse.png)
+ 
+   The "Low Fuse" byte has four fields:
+   
+   - bit    7 set to `1` - CKDIV8 (ClocK DIVide by 8). 
+     1 means `unprogrammed`, so not divided by 8.
+     
+   - bit    6 set to `1` - CKOUT (ClocK OUTput) 
+     allows the system clock to be output on PORTB0, I guess for checking the system. 
+     1 means `unprogrammed` (not output).
+     
+   - bit   54 set to `11` - SUT (Start-Up Time).
+     I believe it makes sense that bit 0/CKSEL0 is prepended to SUT.
+   
+     ![lfuse byte SUT](fuse-lfuse-SUT.png)
+     
+     Looking at the three bits CKSEL0/SUT1/SUT0, the command sets them to `111`.
+     This configuration results in maximum start-up time 16k plus 19k clock cycles plus 65ms.
+     For an 8MHz clock, 35k cycles is 4.5ms, so total delay is just below 70ms. 
+     Looks safe and not unusable long.
+     And we do have an external oscillator who presumably need some time to settle. 
+     
+   - bit 3210 set to `1111` - CKSEL (ClocK source SELect). 
+   
+     The default of 0010 for CKSEL[3:0] results in internal RC Oscillator at 8 MHz as seen in the following table
+     
+     ![lfuse byte CKSEL](fuse-lfuse-CKSEL.png)
+     
+     The command tries to write 1111; this means "Low Power Crystal Oscillator", and that sounds good.
+
+   I think I'm happy with the 0b1111_1111 or 0xFF for the lfuse.
+
+Summarizing, the command tried to write
+ - lock to 0x3F or `0011 1111` and I agree on `xx11 1111`.
+ - efuse to 0xFD or `1111 1101` but I prefer `1111 0101` or 0xF5 (also disable CFD).
+ - hfuse to 0xDA or `1101 1010` but I prefer `1101 1110` or 0xDE (smallest space for bootloader).
+ - lfuse to 0xFF or `1111 1111` and I agree.
+
+
+The write command failed.
+However, as we see later, I do have the fuses at the values I want, not sure why.
+
+```
+avrdude: safemode: lfuse reads as FF
+avrdude: safemode: hfuse reads as DE
+avrdude: safemode: efuse reads as F5
+```
+
+We do not need to burn the bootlader (or the fuse bits), we can also directly flash the application.
 
 
 ### Flashing the application using avrdude
@@ -276,15 +373,15 @@ It also has `Programmer`, this is normally NOT used. It is only used when select
 ![Tools menu](burn-bootloader.png)
 
 It turns out that the latter is not completely true. 
-The Sketch menu has an entry I always ignored: Upload Using Programmer.
+The Sketch menu has an entry I always ignored: `Upload Using Programmer`.
 
 ![Sketch menu](upload.png)
 
-With the [ledtest](ledtest) sketch loaded in the IDE, and the same settings in Tools as before
+With the [ledtest](ledtest) sketch loaded in the IDE, and the same settings in `Tools` as before
  - `Board` is `Arduino Pro or Pro Mini` - this is the board closest to the SSoSS.
  - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it run son 5V).
  - `Port` is the port the programmer is connected to (`COM5` in my example)
- - `Programmer` must be set `Arduino as ISP` - that is what we just flashed in the Nano.
+ - `Programmer` must be set `Arduino as ISP` - that is what we flashed in the Nano to make it a programmer.
 
 We now try `Sketch > Upload Using Programmer`.
 
@@ -367,13 +464,16 @@ Again let's disect the first line.
 ```cmd
 C:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17/bin/avrdude 
   -CC:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17/etc/avrdude.conf 
-  -v -patmega328p -cstk500v1 -PCOM5 -b19200 -Uflash:w:C:\Users\maarten\AppData\Local\Temp\arduino_build_617119/ledtest.ino.hex:i 
+  -v -patmega328p -cstk500v1 -PCOM5 -b19200 
+  -Uflash:w:C:\Users\maarten\AppData\Local\Temp\arduino_build_617119/ledtest.ino.hex:i 
 ```
 
 We recognize all parameters from before.
 And indeed the `-U` is no longer about fuse bits, but about the application hex file `ledtest.ino.hex` in intel hex (`:i`).
 
-Let's execute this line with `-patmega328pb`. But first we need the hex file. We can do that in the same menu with `Export compiled Binary`.
+Let's execute this line with `-patmega328pb`. 
+But first we need the hex file. 
+We can obtain it in from the same menu with `Export compiled Binary`.
 
 ![export](export.png).
 
@@ -488,6 +588,8 @@ C:\Users\maarten\Desktop\flashing\ledtest>
 
 And indeed, the small patch of passing the correct MCU ID fixed the problem.
 
+And we get feedback on the fuses - they are exactly as we want them 9see previous section)!
+
 I soldered all resistors at the front side - [JLCPCB](https://jlcpcb.com/DMP) will only mount components
 on one side. I moved a LED around to check that all segments are working - only after a successful test I will solder the 7-segments (they overlay the resistors).
 
@@ -495,9 +597,10 @@ Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the 
 
 I still have a problem. After power-on it does not start :-(
 
-Solved it! Since I have not yet programmed any fuse, I assume the fuses configure the MCU not to have a bootloader, not size-wise (`BOOTSZ`), nor reset vector wise (`BOOTRST`)
-So, I changed [icsp.bat](ledtest/icsp.bat) no to flash `ledtest.ino.with_bootloader.eightanaloginputs.hex`, but to flash `ledtest.ino.eightanaloginputs.hex`.
-Now the board runs my ledtest app when powered on!
+Solved it! 
+I changed [icsp.bat](ledtest/icsp.bat) not to flash `ledtest.ino.with_bootloader.eightanaloginputs.hex`, 
+but to flash `ledtest.ino.eightanaloginputs.hex`.
+Without flashing the bootloader the board runs my ledtest app when powered on!
 
 (end)
 
