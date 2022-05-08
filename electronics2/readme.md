@@ -47,14 +47,17 @@ There are three classes of components
  - JLCPCB can not deliver it (not in LCSC catalog or the LCSC stock is depleted).
  - The component is a so-called _Extended Part_. 
    This means that JLCPCB has it, but it is not in the parts feeder by default.
-   An operator needs to change the feeder on the pick and place machine, 
-   you have to pay ~$3 per extended component class (plus the normal per component cost).
+   An operator needs to change the feeder on the pick-and-place machine, 
+   you have to pay ~$3 per extended component class (plus the normal per-component cost).
  - It is a so-called _Basic Part_. 
-   This means that JLCPCB has it in the feeders of the pick an place machines.
-   You only pay the per component cost.
+   This means that JLCPCB has it in the feeders of the pick-and-place machines.
+   You only pay the per-component cost.
 
 There are two ways to find a component: 
 you can do that in EasyEDA designer or on JLCPCB website.
+
+
+### Finding a component in EasyEDA
 
 Finding a component in the EasyEDA design tool.
  - Open the `Library` tool in the designer.
@@ -67,7 +70,11 @@ Finding a component in the EasyEDA design tool.
  
    ![EasyEDA find component](find-r220-easyeda1.png)
 
-This works OK, but somehow, I find it easier to search for parts on the JLCPCB website.
+
+### Finding a component in JLCPCB
+
+Finding a component in the EasyEDA design tool works OK.
+But somehow, I find it easier to search for parts on the JLCPCB website.
 
  - In the main page select `Resources` then `SMT Parts Library`.
  
@@ -90,12 +97,12 @@ This works OK, but somehow, I find it easier to search for parts on the JLCPCB w
    ![EasyEDA find component](find-r220-easyeda2.png)
 
 
-In my case, after picking all SMD components, this is the resulting [schematic](Schematic_SSoSS.pdf).
-You can't see it from the schematics (but you can see it in the EasuEDA designer), 
-but all SMD components can be sourced from LCSC.
-
 
 ### EasyEDA - design PCB
+
+After picking all SMD components, this is the resulting [schematic](Schematic_SSoSS.pdf).
+You can't see it from the schematics (but you can see it in the EasyEDA designer), 
+but all SMD components can be sourced from LCSC.
 
 Once the schematics is drawn with the JLCPCB supported components, proceed to the PCB layout stage as usual.
 No special attention here, other then to draw the components you want mounted all on the same side.
@@ -108,8 +115,8 @@ The back side will not be mounted by JLCPCB, so I took big 0805 components that 
 ![back](back-3D.png)
 
 An extra step is needed when exporting the project. In addition to the _Gerber_ file, 
-JLCPCB needs a _bill of material_ (BOM) and _pick and place_ instructions.
-You find the other two exports also in the File menu, above and below the Gerber exporter.
+JLCPCB needs a _bill of material_ (BOM) and _pick-and-place_ instructions.
+You find the other two exports also in the `File` menu, above and below the Gerber exporter.
 
 ![export](easyeda-export.png)
 
@@ -124,7 +131,7 @@ We visit the [JLCPCB](https://jlcpcb.com/DMP) website to prepare our order.
 
  - Drag in the Gerber file we just exported. As usual we get a preview.
    We leave all parameters to standard. 
-   Cost are very low: $2 for the special offer (5 small PCBs), plus $4 for lowest shipping.
+   Cost are very low: $2 for the special offer (5 small PCBs), plus nearly $4 for lowest shipping.
 
  - The first step is to enable component mounting at the bottom of the form.
 
@@ -141,12 +148,12 @@ We visit the [JLCPCB](https://jlcpcb.com/DMP) website to prepare our order.
    ![side and quantity](jlcpcb-import2.png)
 
  - Once that is confirmed, we get a dialog, where we need to upload the _BOM file_ 
-   and the _pick and place file_ we exported earlier. 
+   and the _pick-and-place file_ we exported earlier. 
    Also you need to fill out the kind of project your are making, I selected `Electronics and Hobbies - DIY`.
 
-   ![BOM and pick&place](jlcpcb-import3.png)
+   ![BOM and pick-and-place](jlcpcb-import3.png)
  
- - Once the BOM and pick&place files are uploaded, we get a new form for part selection.
+ - Once the BOM and pick-and-place files are uploaded, we get a new form for part selection.
    Here we can see if there are problems with components (you selected one whose stock ran out - yes I had that!).
    More importantly, you can deselect components. For example, I do not want J1 and J2 to be mounted.
    I was surprised to see them enabled, because they are not SMT components, 
@@ -160,7 +167,7 @@ We visit the [JLCPCB](https://jlcpcb.com/DMP) website to prepare our order.
    That rank is a bit special: the price is fixed irrespective of quantity; 
    if you fold the line item open it reads e.g. `*For qty≤20, charges a fixed fee of €0.0203`.
 
-   If you select an extended component, JLCPCB is required to change the feeders on the pick and place machines,
+   If you select an extended component, JLCPCB is required to change the feeders on the pick-and-place machines,
    which requires an additional labor fee, $3 per Extended Component type.
 
  - After clicking next, we are back at the main form.
@@ -172,12 +179,12 @@ We visit the [JLCPCB](https://jlcpcb.com/DMP) website to prepare our order.
    ![components skipped](jlcpcb-import5.png)
    
    Note that passives (resistors, capacitors) are typically very low priced 
-   (although for these small quantities we are in lowest ranl and pay the relatively high fixed price).
-   The ATMEGA is unbelievably high priced. An Arduino Nano board with that ATMEGA goes for $2 on AliExpress.
+   (although for these small quantities we are in lowest rank and pay the relatively high fixed price).
+   The ATmega328 is unbelievably high priced. An Arduino Nano board with that ATmega328 goes for $2 on AliExpress.
    I guess I pay for the semiconductors shortage (April 2022).
    
    Also the oscillator is expensive. On top of that, the ATMEGA and oscillator are extended components so
-   we need to pay and extra $3 for both.
+   we need to pay an extra $3 for both.
    
  - Pricing has gone up: we have to pay for all components, we have to pay for changing the feeders 
    (2 extended components so $6 in total), and we have to pay for the solder 
@@ -185,7 +192,7 @@ We visit the [JLCPCB](https://jlcpcb.com/DMP) website to prepare our order.
 
    ![components skipped](jlcpcb-import6.png)
    
- - When I put this in my cart and paid there was an unpleasant surprise.
+ - When I put this in my cart and paid, there was an unpleasant surprise.
    Suddenly I had to pay $12 tax. That had never happened before.
    And shipping increased to $8. Is that the extra weight?
    Feels a bit excessive. 
@@ -199,7 +206,7 @@ Considerations before producing the board:
  - I used the ATmega328, not the ATM168 from SSoS, LCSC doesn't have the 168.
  - The ATmega328 on LCSC is very expensive ($10), so I only make two boards.
  - I'm a digital (software) guy, so I have doubts in the analogue domain
-   - Do I have the correct oscillator (I need 8MHZ for ATmega328 at 3V3) - correct capacitance?
+   - Do I have the correct oscillator (I need 8MHz for ATmega328 at 3V3) - correct capacitance?
    - Are the transistors correct?
    - There is no cap on the RESET# pin.
    - No ground poor.
@@ -209,7 +216,7 @@ Considerations before producing the board:
 
 Considerations after producing the board:
  - One LED on the PCB might have been nice for testing bring-up.
- - A pad for PORTB0 to do clock testing (see CKOUT fuse bit).
+ - A pad for PORTB0 would have helped in clock testing (see CKOUT fuse bit).
  - The ATmega328PB that I took is not nicely supported by Arduino. It works, but an ATmega328P would have been easier.
 
 
@@ -220,17 +227,24 @@ In total 18 days for manufacturing and shipping.
 
 There was one thing to caught me by surprise: the board had two holes I did not put there,
 see the red encircled areas. I guess those are put by JLCPCB to have anchor points 
-for the solder paste mask.
+for the solder paste stencil.
 
 ![SSoSS](SSoSS-holes.jpg)
  
-The [flashing](flashing) took some trial and error.
+The [flashing](flashing) took two days of trial and error, reason was I have the ATmega328PB, not standard ATmega328P.
+This means fiddling with fuses, avrdude, and fixing a bug in the driver (hardcoded 16MHz clock).
+
 
 ## Assembly
 
-Once the firmware was correctly working, it was flashed, and I could proceed with final assembly.
+Once the firmware was correctly working and flashed, and I could proceed with final assembly.
 The components "brace" each other, so once assembled, there is little opportunity for changes.
 
 ![SSoSS assembled](SSoSS-assembled.jpg)
+
+
+## Enclosure
+
+What is left is to make a LEGO enclosure.
 
 (end)
