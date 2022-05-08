@@ -388,7 +388,7 @@ I was surprised at first that there are _two_ hex files.
    If you use ICSP to flash, the entire flash is wiped, so you might want to flash the bootloader.
    If you use TX/RD to flash, the bootloader only flashes the application part, so you need the file without bootloader.
  
-I made a bat file [icsp.bat](icsp.bat) with the avrdude call, replacing the `-patmega328p` with `-patmega328pb`.
+I made a bat file [icsp.bat](ledtest/icsp.bat) with the avrdude call, replacing the `-patmega328p` with `-patmega328pb`.
 I also factored out the path to avrdude.
 
 Running the batch file finally gives success:
@@ -494,6 +494,10 @@ on one side. I moved a LED around to check that all segments are working - only 
 Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the flashing worked.
 
 I still have a problem. After power-on it does not start :-(
+
+Solved it! Since I have not yet programmed any fuse, I assume the fuses configure the MCU not to have a bootloader, not size-wise (`BOOTSZ`), nor reset vector wise (`BOOTRST`)
+So, I changed [icsp.bat](ledtest/icsp.bat) no to flash `ledtest.ino.with_bootloader.eightanaloginputs.hex`, but to flash `ledtest.ino.eightanaloginputs.hex`.
+Now the board runs my ledtest app when powered on!
 
 (end)
 
