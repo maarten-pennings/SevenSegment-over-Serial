@@ -14,6 +14,7 @@ They sponsored this project.
 
 ![SSoSS for LEGO](SSoSS-angle.jpg)
 
+![SSoSS for LEGO (backside)](SSoSS-angle-back.jpg)
 
 ## Introduction
 
