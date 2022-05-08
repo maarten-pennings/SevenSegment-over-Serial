@@ -206,7 +206,8 @@ Considerations before producing the board:
  - I did make my own 3D model of the [IDC connector](IDC3dModel).
 
 Considerations after producing the board:
- - One LED on the PCB might have been nice for testing bringup.
+ - One LED on the PCB might have been nice for testing bring-up.
+ - A pad for PORTB0 to do clock testing (see CKOUT fuse bit).
  - The ATmega328PB that I took is not nicely supported by Arduino. It works, but an ATmega328P would have been easier.
 
 

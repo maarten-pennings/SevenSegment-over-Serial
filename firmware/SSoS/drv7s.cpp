@@ -128,6 +128,12 @@ ISR( TIMER2_COMPA_vect ) {
   }
 }
 
+#if 0
+#define XSTR(x) STR(x)
+#define STR(x) #x
+#pragma message "F_CPU = " XSTR(F_CPU)
+#endif
+
 // Setup (hardware registers) for 7-segments
 void drv7s_setup() {
   // Setup row/column drivers
@@ -148,7 +154,7 @@ void drv7s_setup() {
   noInterrupts(); // Disable all interrupts - cli()
   TCCR2A = 0; // Do not understand why, but without first setting to 0, we get 4.063us instead of 1ms
   // Set Output Compare Register A for 1kHz (1ms)
-  OCR2A = 16000000/*CPU*/  /  64/*prescaler*/  /  1000/*targetfreq*/  -  1;
+  OCR2A = F_CPU/*CPU*/  /  64/*prescaler*/  /  1000/*targetfreq*/  -  1;
   // Turn on CTC mode (Clear Timer on Compare Match) WGM2[210]=010 (so we only set WGM21)
   TCCR2A = 1 << WGM21;
   // Select prescaler of 64 with Clock Select CS2[210]=100 (so we only set CS22)

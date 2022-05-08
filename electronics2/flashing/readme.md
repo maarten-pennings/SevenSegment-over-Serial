@@ -598,18 +598,40 @@ Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the 
 ## Problems
 
 Looking at the [video of the blinking LED](https://youtu.be/dpqHkJS7RNk) you might think we're done.
-But I still have a problem. The app starts after flashing, but after _power-on_ it doesn't.
+But I still have a problem. The LED driven by the app starts blinking after flashing, but after _power-on_ it doesn't.
 
 Solved it! 
 I changed [icsp.bat](ledtest/icsp.bat) not to flash `ledtest.ino.with_bootloader.eightanaloginputs.hex`, 
 but to flash `ledtest.ino.eightanaloginputs.hex`.
 Without flashing the bootloader the board runs my ledtest app when powered on!
 
-Next, I flashed the official [SSoS firmware](../../firmware) - I added a similar flash script.
+Next, I flashed the official [SSoS firmware](../../firmware/SSoS) - I added a similar flash script.
 Flashing works, booting works, but the display flickers.
-It is hard to see on the [video](https://youtu.be/p-Qe8X2YwIE)
+It is hard to see on the [video](https://youtu.be/p-Qe8X2YwIE).
 My guess: fuses need tweaking to get a faster clock.
 
+The standard firmware shows `SSoS` on power up. I put a probe on Segment A.
+It should be high for unit 0, 1, not for 2 and agaian for 3.
+The logic analyzer confirms that, see the blue rectangle that encircles one frame (4 units).
+
+![timing](segment-a.png)
+
+But we also see that each unit gets 10ms, and thus the whole frame 40ms instead of 20ms.
+At 20ms (50Hz), flicker is not visible, but at 40ms (25Hz) it is.
+
+Found the bug.
+The driver [drv7s.cpp](../../firmware/SSoS/drv7s.cpp#L157) had hard-wired the clock frequency:
+
+```c++
+OCR2A = 16000000/*CPU*/  /  64/*prescaler*/  /  1000/*targetfreq*/  -  1;
+```
+
+and I now changed that to use the system macro `F_CPU` 
+(which is 8000000 if we compile for `Board` the `Arduino Pro or Pro Mini` and `Processor` at `ATmega328P (3.3V, 8MHz)`).
+
+```c++
+OCR2A = F_CPU/*CPU*/  /  64/*prescaler*/  /  1000/*targetfreq*/  -  1;
+```
 
 (end)
 

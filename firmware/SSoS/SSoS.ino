@@ -1,7 +1,9 @@
 // SSoS.ino - Seven Segment over Serial firmware
+// Suggested to build for Board "Arduino Pro or Pro Mini" with Processor "ATmega328P (3.3V, 8MHz)"
+// This way, the drv7s knows the clock frequency and can adapt its refresh rate.
 #define APP_LONGNAME "Seven Segment over Serial"
 #define APP_NAME     "SSoS"
-#define APP_VERSION  "5.5"
+#define APP_VERSION  "5.6"
 #define APP_WAIT_MS  2000
 
 
