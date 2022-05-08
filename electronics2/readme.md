@@ -7,10 +7,12 @@ This page is about the _second_ iteration of the electronics.
 
 The first iteration, depicted below, needed a miniaturization. 
 
-![SSoS for LEGO](../enclosure/assembled-cable.jpg)
+![SSoS for LEGO](SSoS-angle.jpg)
 
 Miniaturization is achieved by using the SMT service of [JLCPCB](https://jlcpcb.com/DMP).
 They sponsored this project.
+
+![SSoSS for LEGO](SSoSS-angle.jpg)
 
 
 ## Introduction
@@ -223,5 +225,12 @@ for the solder paste mask.
 ![SSoSS](SSoSS-holes.jpg)
  
 The [flashing](flashing) took some trial and error.
- 
+
+## Assembly
+
+Once the firmware was correctly working, it was flashed, and I could proceed with final assembly.
+The components "brace" each other, so once assembled, there is little opportunity for changes.
+
+![SSoSS assembled](SSoSS-assembled.jpg)
+
 (end)

@@ -50,4 +50,10 @@ I 3D-printed an [enclosure](enclosure) so that I can use SSoS with LEGO Mindstor
 ## LEGO demo
 See the [LEGO code](legocode) for some examples of how to use the SSoS device with LEGO.
 
+## Smaller
+The (LEGO) enclosure is 4×8 LEGO units (studs). But LEGO technic components need to have odd length.
+So I set out to miniaturize the Seven Segment over Serial, making a Seven Segment over Serial Small (SSoSS).
+Target is 3×7. To achieve this, I made a single PCB, containing both the "Nano" and the 7-segment units.
+Section [version 2](electronics2) shows the schematics and the unexpected flashing problems.
+
 (end)
