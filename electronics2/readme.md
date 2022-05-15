@@ -1,4 +1,4 @@
-# Electronics - version 2
+# Electronics - version 2 (small)
 
 Seven-Segment over Serial: a device consisting of four 7-segment display units, 
 controllable via a serial link, to be usable as display for LEGO Mindstorms Robot Inventor or Spike Prime.

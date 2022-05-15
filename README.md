@@ -5,9 +5,10 @@ See a [video](https://youtu.be/2fTZVQPiG7E) of the device in action.
 
 ![logo](SSoS180x90.png)
 
-![SSoS for LEGO](enclosure/assembled-cable.jpg)
+![SSoS for LEGO](enclosure2/product-cable.jpg)
 
-![Connected to the hub](enclosure/assembled-mounted.jpg)
+![Connected to the hub](enclosure2/product-hub.jpg)
+
 
 ## Introduction
 I stumbled on this module [Seven Segment for micro:bit](http://www.monkmakes.com/mb_7_seg.html).
@@ -40,7 +41,7 @@ First some proof of concept sketches (using SFRs for ports, timer, ISR), finally
 
 
 ## User manual
-There is an extensive [user manual](manual) with examples (as implemented by the firmware for the [end-product](firmware/SSoS)).
+There is an extensive [user manual](manual) with examples (as implemented by the [firmware](firmware/SSoS)).
 
 
 ## LEGO enclosure 
@@ -50,10 +51,13 @@ I 3D-printed an [enclosure](enclosure) so that I can use SSoS with LEGO Mindstor
 ## LEGO demo
 See the [LEGO code](legocode) for some examples of how to use the SSoS device with LEGO.
 
-## Smaller
-The (LEGO) enclosure is 4×8 LEGO units (studs). But LEGO technic components need to have odd length.
-So I set out to miniaturize the Seven Segment over Serial, making a Seven Segment over Serial Small (SSoSS).
+## Generation 2: Seven Segment over Serial Small
+The (LEGO) enclosure we made is 4×8 LEGO units (studs). But LEGO Technic components usually have an _odd_ length.
+So I set out to miniaturize making a Seven Segment over Serial _Small_ (SSoSS).
 Target is 3×7. To achieve this, I made a single PCB, containing both the "Nano" and the 7-segment units.
-Section [version 2](electronics2) shows the schematics and the unexpected flashing problems.
+
+Section [electronics2](electronics2) shows the schematics and the unexpected firmware flashing problems.
+
+Section [enclosure2](enclosure2) shows the new enclosure.
 
 (end)
