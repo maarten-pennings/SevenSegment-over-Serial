@@ -246,6 +246,6 @@ The components "brace" each other, so once assembled, there is little opportunit
 
 ## Enclosure
 
-What is left is to make a LEGO enclosure.
+What is left is to make a new [LEGO enclosure](../enclosure2) for this smaller PCB.
 
 (end)
