@@ -15,9 +15,9 @@ That is the plan: no screw, no glue, maybe a bit of click.
 
 I started by modelling the PCB with some key components.
 
-![PCB top](PCB-top.png)
+![PCB top](pcb-top.png)
 
-![PCB bottom](PCB-bottom.png)
+![PCB bottom](pcb-bottom.png)
 
 
 Here is the PCB, but now in its enclosure.
