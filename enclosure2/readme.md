@@ -13,28 +13,31 @@ That is the plan: no screw, no glue, maybe a bit of click.
 
 ## 3D modeling 
 
-I started by modelling the PCB with some key components.
+I started by modelling the PCB with some key components (the 4 7-segment units, the IDC socket, and the ATmega328).
 
 ![PCB top](pcb-top.png)
 
 ![PCB bottom](pcb-bottom.png)
 
 
-Here is the PCB, but now in its enclosure.
+Here is the PCB, but now in its enclosure. The width and height are 3 by 7 LEGO "units" (studs). 
+At the back some "wings" for mounting to Technic pieces.
 
 ![Product top](prod-top.png)
 
 ![Product bottom](prod-bottom.png)
 
 
-This is the enclosure in isolation.
+This is the enclosure in isolation. At the back the hole for the IDC socket, on the inside the ridges where the PCB rests 
+and a gutter (hardly visible) above the ridges to click the PCB in place.
 
 ![Enclosure top](enclosure-top.png)
 
 ![Enclosure bottom](enclosure-bottom.png)
 
 
-The final figures show a sectional view on the short and long side
+The final figures show a sectional view on the short and long side. 
+The short sectional view shows the gutter for the PCB more clearly.
 
 ![Section short](section-short.png)
 
@@ -45,6 +48,8 @@ The final figures show a sectional view on the short and long side
 
 Here is the STL file for the enclosure.
 It is a single [stl file](enclosure.stl)
+Print on my Cetus3D (0.15mm layer height, 13% infill, fine quality, with support and raft)
+was estimated at 1.9h and 15.0g of PLA.
 
 
 ## 3D print results on Cetus3D
@@ -60,6 +65,8 @@ It is a single [stl file](enclosure.stl)
 
 
 ## Electronics enclosed
+
+The fit is tight. It was hard to get the PCB in, no risk of it dropping out, but also hard to get out.
 
 ![product 1](product1.jpg)
 
@@ -79,6 +86,7 @@ Finally, with cable and hub.
 ## 3D print via JLCPCB
 
 [JLCPCB](https://jlcpcb.com/DMP) offers various 3D printing technologies:
+
 - **SLA (resin)**  
   SLA or Stereolithography is an additive manufacturing process that belongs to the vat photopolymerization family. 
   The vat contains photo sensitive (liquid) resin and a light source (e.g. laser) is used to cure (solidify) the resin 
@@ -116,6 +124,40 @@ Finally, with cable and hub.
   JLCPCB offers 1 material: ABS in white and black. Moderate price point: $3.83.
 
   ![JLCPCB FDM](jlcpcb-fdm.png)
+
+[JLCPCB](https://jlcpcb.com/DMP) offered me to try their 3D-printing services, so I tried the three low-cost versions: SLA, MJF nylon, and FDM.
+After submitting my model, JLCPCB does a (presumably) automated design rule check for manufacturability. 
+And my designs came out negative :-(
+
+> The wall thickness like those red area are too thin which has a high risk of crack, loss and deformation.
+
+![JLCPCB assessment](jlcpcb-assessment.png)
+
+
+> SLA LEDO 6060 Resin:  
+> Will this risk be acceptable for you? If not, could you please kindly increase it to be at least **0.8mm** to proceed? 1.5mm will be better.
+
+> MJF PA12-HP Nylon:  
+> Will this risk be acceptable for you? If not, could you please kindly increase it to be at least **1.0mm** to proceed? 2.0mm will be better.
+
+> FDM ABS White:  
+> Will this risk be acceptable for you? If not, could you please kindly increase it to be at least **1.2mm** to proceed? 2.0mm will be better.
+
+I answered that these are LEGO technic dimensions, so I can not really change them.
+That I printed the object on my own Cetus3D, and that worked.
+My last argument was that this is a trial anyhow to see what JLCPCB can deliver.
+
+So they agreed to proceed. But apparently, closer to the machine, there is a manual design rule check by an auditor.
+
+> Our auditor advised we can't print the ABS part [...]. The part will be broken at those thin area less than 1.2mm.
+
+So I canceled the FDM ABS print. Which is a bit funny, because my home printer is a hobby grade FDM printer,
+and the professional FDM printer apparently can't do what my hobby printer can.
+
+But impressed by the quality assurance. This is human work and thus costly.
+Would be good if there was a design rule checker just like for the PCBs.
+
+
 
 (end)
 
