@@ -36,7 +36,7 @@ while i < 1234 :
 ssos.write( b"\fdone")
 
 utime.sleep_ms(2000)
-ssos.write( b"\x11") # line mode
+ssos.write( b"\x11") # Line mode
 
 i = 0
 while i < 1234 :
@@ -69,8 +69,8 @@ ssos = hub.port.F
 ssos.mode( hub.port.MODE_FULL_DUPLEX )
 while not hasattr(ssos, 'baud') : pass # Wait till `ssos` is serial port
 ssos.baud(115200)
-ssos.write( b"\0") # Reset SSoS device
-ssos.write( b"\x11") # line mode
+ssos.write( b"\0")   # Reset SSoS device
+ssos.write( b"\x11") # Line mode
 
 motor = hub.port.E.motor
 while True:
@@ -79,5 +79,39 @@ while True:
 ```
 
 ![motor](motor.jpg)
+
+
+## Ultrasonic distance
+
+This is a demo that prints the distance measured by an ultrasonic sensor.
+
+Note that the SSoS device is connected to port F of the hub.
+The ultrasonic sensor is connected to port A.
+The `get()` function of an ultrasonic sensor reports a list of 1 numbers.
+When the `FORMAT_RAW` is passed, the number seems to be the distance in millimeters.
+([bast documentation](https://lego.github.io/MINDSTORMS-Robot-Inventor-hub-API/class_device.html)).
+Warning: when the object is too far from the sensor, the returned distance is `None`.
+
+```python
+# Show ultrasonic sensor (port A) distance on Seven Segment over Serial (port F)
+import hub
+
+ssos = hub.port.F
+ssos.mode( hub.port.MODE_FULL_DUPLEX )
+while not hasattr(ssos, 'baud') : pass # Wait till `ssos` is serial port
+ssos.baud(115200)
+ssos.write( b"\0")   # Reset SSoS device
+ssos.write( b"\x11") # Line mode
+
+ultra = hub.port.A.device
+
+while True:
+    dist = ultra.get(ultra.FORMAT_RAW)[0]
+    msg = "Far" if dist is None else str(dist)
+    print(msg)
+    ssos.write( b"\t"+msg+"\n" )
+```
+
+
 
 (end)
