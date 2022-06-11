@@ -30,7 +30,7 @@ You might wonder what the fuses are. Those are bits in some non-volatile memory 
 The name "fuse" is misleading: by default they are 1, the programmer
 can clear them to 0, but the programmer can also set them back to 1.
 So they are not one-time fuses. Still they are tricky, because some fuse settings
-have wife effects. For example there is a fuse that disables reset; but without reset the programmer
+have dangerous effects. For example there is a fuse that disables reset; but without reset the programmer
 can not connect to the fuses!
 
 We can also flash a bootloader (in the lower part of the flash). 
