@@ -1,7 +1,10 @@
 # Seven Segment over Serial (SSoS)
 A device consisting of 7-segment display units, controllable via a serial link (with Arduino sketch and LEGO enclosure).
 
-See a [video](https://youtu.be/2fTZVQPiG7E) of the device in action.
+See a videos of the device in action.
+
+
+[![video](video.jpg)](https://youtu.be/2fTZVQPiG7E) [![video](video.jpg)](https://www.youtube.com/watch?v=muLhuRukZes)
 
 ![logo](SSoS180x90.png)
 
@@ -54,10 +57,12 @@ See the [LEGO code](legocode) for some examples of how to use the SSoS device wi
 ## Generation 2: Seven Segment over Serial Small
 The (LEGO) enclosure we made is 4×8 LEGO units (studs). But LEGO Technic components usually have an _odd_ length.
 So I set out to miniaturize making a Seven Segment over Serial _Small_ (SSoSS).
-Target is 3×7. To achieve this, I made a single PCB, containing both the "Nano" and the 7-segment units.
+Target is 3×7. To achieve this, I made a single PCB, combining both the "Nano" and the 7-segment units.
+
+![pcb2](electronics2/SSoSS-angle-back.jpg)
 
 Section [electronics2](electronics2) shows the schematics and the unexpected firmware flashing problems.
 
-Section [enclosure2](enclosure2) shows the new enclosure.
+Section [enclosure2](enclosure2) shows the new enclosure, 3D printed via [JLCPCB](https://jlcpcb.com/DMP).
 
 (end)

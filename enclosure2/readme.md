@@ -11,9 +11,13 @@ That is the plan: no screw, no glue, maybe a bit of click.
 [JLCPCB](https://jlcpcb.com/DMP) offered me to try their 3D-printing services, which is gladly accepted.
 
 
-## 3D modeling 
+## Designing the new enclosure
 
-I started by modelling the PCB with some key components (the 4 7-segment units, the IDC socket, and the ATmega328).
+Goal is to design an enclosure matching LEGO Technic dimensions: a 7×3×3 (LEGO) studs.
+
+### Modeling
+
+I started by modeling the PCB with some key components (the 4 7-segment units, the IDC socket, and the ATmega328).
 
 ![PCB top](pcb-top.png)
 
@@ -44,7 +48,7 @@ The short sectional view shows the gutter for the PCB more clearly.
 ![Section Long](section-long.png)
 
 
-## STL files
+### STL files
 
 Here is the STL file for the enclosure.
 It is a single [stl file](enclosure.stl)
@@ -52,7 +56,7 @@ Print on my Cetus3D (0.15mm layer height, 13% infill, fine quality, with support
 was estimated at 1.9h and 15.0g of PLA.
 
 
-## 3D print results on Cetus3D
+### 3D print results on Cetus3D
 
 ![enclosure 1](enclosure1.jpg)
 
@@ -64,7 +68,7 @@ was estimated at 1.9h and 15.0g of PLA.
 
 
 
-## Electronics enclosed
+### Electronics enclosed
 
 The fit is tight. It was hard to get the PCB in, no risk of it dropping out, but also hard to get out.
 
@@ -83,13 +87,17 @@ Finally, with cable and hub.
 ![product with hub](product-hub.jpg)
 
 
+
+
 ## 3D print via JLCPCB
 
-[JLCPCB](https://jlcpcb.com/DMP) offers various 3D printing technologies:
+[JLCPCB](https://jlcpcb.com/DMP) offers various 3D printing technologies: SLA, MJF, SLM, and FDA.
+
+### Technologies
 
 - **SLA (resin)**  
   SLA or Stereolithography is an additive manufacturing process that belongs to the vat photopolymerization family. 
-  The vat contains photo sensitive (liquid) resin and a light source (e.g. laser) is used to cure (solidify) the resin 
+  The vat (tub, container) contains a photo sensitive (liquid) resin. A light source (e.g. laser) is used to cure (solidify) the resin 
   ([youtube](https://www.youtube.com/watch?v=TuubPMWeQQE&t=143s)).
   This method is popular because it produces high-accuracy parts with fine features and smooth surface.
   
@@ -101,7 +109,7 @@ Finally, with cable and hub.
 - **MJF (Nylon)**  
   MJF or Multi Jet Fusion is an industrial 3D printing process that quickly produces nylon parts.
   It uses an inkjet array to apply (fusing and detailing) "ink" across a bed of nylon powder, which are then fused with heat. 
-  The process repeats layer after layer ([youtube](https://www.youtube.com/watch?v=KKyQJLe_G6o)).
+  The [process](https://xometry.eu/en/multi-jet-fusion-mjf-3d-printing-technology-overview/) repeats layer after layer ([youtube](https://www.youtube.com/watch?v=KKyQJLe_G6o)).
   
   JLCPCB offers 2 nylons: PA12-HP (black or gray) or PAC-HP (multicolor).
   The PA12-HP is still affordable ($3.64 for my model), but PAC-HP gets expensive ($23.64)
@@ -125,8 +133,19 @@ Finally, with cable and hub.
 
   ![JLCPCB FDM](jlcpcb-fdm.png)
 
+### Summary offers JLCPCB
+
+| abbr | full name                 | material        | price($) |
+|:-----|:--------------------------|:----------------|---------:|
+| SLA  | Stereolithography         | LEFO6060        |    1.00  |
+| MJF  | Multi Jet Fusion          | PA12-HP Nylon   |    3.64  |
+| SLM  | Selective Laser Melting   | stainless steel |   23.56  |
+| FDM  | Fused Deposition Modeling | ABS             |    3.83  |
+
+### Ordering
+
 [JLCPCB](https://jlcpcb.com/DMP) offered me to try their 3D-printing services, so I tried the three low-cost versions: SLA, MJF nylon, and FDM.
-After submitting my model, JLCPCB does a (presumably) automated design rule check for manufacturability. 
+After submitting my model, JLCPCB does a (presumably) automated _design rule check_ for manufacturability. 
 And my designs came out negative :-(
 
 > The wall thickness like those red area are too thin which has a high risk of crack, loss and deformation.
@@ -143,21 +162,45 @@ And my designs came out negative :-(
 > FDM ABS White:  
 > Will this risk be acceptable for you? If not, could you please kindly increase it to be at least **1.2mm** to proceed? 2.0mm will be better.
 
-I answered that these are LEGO technic dimensions, so I can not really change them.
+I answered that these are LEGO Technic dimensions, so I can not really change them.
 That I printed the object on my own Cetus3D, and that worked.
 My last argument was that this is a trial anyhow to see what JLCPCB can deliver.
 
-So they agreed to proceed. But apparently, closer to the machine, there is a manual design rule check by an auditor.
+So they agreed to proceed. But apparently, closer to the machine, there is a manual design rule check by a human auditor.
 
 > Our auditor advised we can't print the ABS part [...]. The part will be broken at those thin area less than 1.2mm.
 
 So I canceled the FDM ABS print. Which is a bit funny, because my home printer is a hobby grade FDM printer,
 and the professional FDM printer apparently can't do what my hobby printer can.
 
-But impressed by the quality assurance. This is human work and thus costly.
+But I am impressed by the quality assurance process. This is human work and thus costly.
 Would be good if there was a design rule checker just like for the PCBs.
 
+### Results
 
+I ordered May 15, production started May 18 due to the checks and my overrule and finished may 20, and arrived May 31.
+So a turn-around time of two weeks with slowest shipping option.
+
+On the photos below see my home print (on the left, white), the SLA print (middle, less white) and the MJF print (right, gray).
+The home print is a prototype model; the connector hole is a bit too small, and I also removed the ring around that hole.
+
+![front](front-ABC-3D.jpg)
+
+![side](side-ABC-3D.jpg)
+
+![back](back-ABC-3D.jpg)
+
+The prints are great. No failures due to the thin walls, and very important, they fit LEGO pins and beams well. 
+Good (fine) printing of small features.
+
+Also the electronics fit well (bit of a push, and hard to get out). 
+See here my home printed enclosure and the MJF enclosure fitted with the electronics.
+
+![model A (home)](frontA-3D.jpg)
+
+![model C (MJF)](frontC-3D.jpg)
+
+I really like the MJF texture. Downside is of course that you do need to like that color.
 
 (end)
 
