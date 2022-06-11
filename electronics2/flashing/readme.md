@@ -15,23 +15,29 @@ It allows low-level access to the flash.
 We need a so-called _programmer_ to connect a PC to the board to program the ATmega328PB.
 
 You can buy a programmer, but you can also convert an Arduino Nano (or Uno) into a programmer, 
-see https://www.instructables.com/Burn-a-New-Bootloader-Arduino-Pro-Mini. The latter is what we are going to do.
-This allows us, to use `avrdude` on the PC to "mess around" in the _target_.
-The tool avrdude is actually integrated in the Arduino IDE, so you are using it without knowing it.
+see https://www.instructables.com/Burn-a-New-Bootloader-Arduino-Pro-Mini. That is what we are going to do.
+This allows us to use `avrdude` on the PC to "mess around" in the _target_.
+The tool avrdude is actually integrated in the Arduino IDE, so you have it and are using it without knowing.
 
 ![programmer](programmers-1.png)
 
-This messing around could be: flashing your own application, set internal fuses, or flashing a bootloader.
+This messing around could be: flashing your own application, setting internal fuses, or flashing a bootloader.
 
 Flashing the application is what we are after.
 
 You might wonder what the fuses are. Those are bits in some non-volatile memory that 
 [configure features in the MCU](https://circuitdigest.com/microcontroller-projects/understanding-fuse-bits-in-atmega328p-to-enhance-arduino-programming-skills).
+The name "fuse" is misleading: by default they are 1, the programmer
+can clear them to 0, but the programmer can also set them back to 1.
+So they are not one-time fuses. Still they are tricky, because some fuse settings
+have wife effects. For example there is a fuse that disables reset; but without reset the programmer
+can not connect to the fuses!
 
 We can also flash a bootloader (in the lower part of the flash). 
 With that, we no longer need a programmer; a USB-to-serial adapter suffices.
-Avrdude sends commands via the serial port to the bootloader running on the target, 
-those commands flash the user application in the (upper part of the) flash.
+Avrdude then sends commands via the _serial port_ to the bootloader running on the target
+instead of directly touching the memories.
+Those commands tell the bootloader to flash the user application in the (upper part of the) flash.
 
 This is what most Arduino boards (Uno, Nano) use.
 
@@ -51,10 +57,10 @@ We will convert a standard Arduino Nano to a programmer by flashing an appropria
    - `Board` is `Nano` (`Tools -> Board -> Arduino AVR Boards > Arduino Nano`) - an Uno would also work if you have that.
    - `Processor` is `ATmega328P (Old Bootloader)` - maybe yours has the new bootloader.
    - `Port` is `COM5` - or whatever the USB port of your Nano is.
- - Load the programmer sketch: `File -> Examples -> 11.ArduinoISP -> ArduinoISP`.
+ - Load the **programmer** sketch: `File -> Examples -> 11.ArduinoISP -> ArduinoISP`.
  - Compile and upload the programmer sketch by pressing the Upload button (or `Sketch > Upload`).
 
-The Nano is now a programmer.
+The Nano is now a programmer (type `Arduino [as] ISP`).
 
 
 ## Wiring the programmer to a target
@@ -71,12 +77,13 @@ Connect
 
 ![Wiring](ICSP-wire.png)
 
-This is the pinout of the ICSP header (the dot in the lower right corner, of both boards, indicates pin 1).
+This is the pinout of the ICSP header.
+The dot in the lower right corner, of both boards, indicates pin 1.
 
 ```text
             +----+
         GND |6  5| RSTn
- MOSI (D11) |4  3| SCK (D13)
+ (D11) MOSI |4  3| SCK (D13)
         VCC |2  1| MISO (D12)
             +----+°
 ```         
@@ -97,11 +104,11 @@ We can even do that from the Arduino IDE; I believe this also programs the fuses
 
 It is important that the IDE knows the target MCU, so it can flash the appropriate bootloader using the correct method.
  - We have the target board (SSoSS) connected with the 6 wires to the programmer (Nano) as described above.
- - We connect the Nano to the PC.
+ - We connect the programmer (Nano) to the PC.
  - On the PC we start the Arduino IDE with an empty project.
- - We must setup the correct target in te Tools menu.
+ - We must setup the correct target in the Tools menu.
    - `Board` is `Arduino Pro or Pro Mini` - this is the board closest to the SSoSS.
-   - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it runs on 5V).
+   - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it runs on 5V from USB).
    - `Port` is the port the programmer is connected to (`COM5` in my example)
    - `Programmer` must be set `Arduino as ISP` - that is what we just flashed in the Nano.
 
@@ -196,7 +203,7 @@ Now I know that the Arduino IDE can't burn the bootloader.
 But maybe avrdude can...
 
 > **Note** the core problem is that no Arduino board has the ATMega328PB.
-> I did find an Arduino IDE compatible board from [polulu](https://www.pololu.com/docs/0J74/4.3).
+> I did find an Arduino IDE compatible board from [polulu](https://www.pololu.com/docs/0J74/4.3) with the PB.
 > However, it turned out that it is not well enough integrated to make the `Burn bootloader` work.
 
 So let's try avrdude.
@@ -217,22 +224,23 @@ Let's check the [avrdude manual](https://man.archlinux.org/man/community/avrdude
 We learn
  - `avrdude` executable is located in `C:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17\bin`.
  - The `-C` passes a config-file that contains all programmer and part definitions that avrdude knows about. 
- - `-v` to enable verbose output.
+ - `-v` enabls verbose output.
  - `-p partno` is the only option that is mandatory, we see that `atmega328p` is passed instead of `patmega328pb`.  
-   This is the **root cuase of the error**.
+   This is the **root cause of the error**.
  - `-c programmer-id`; Atmel's default programmer is the STK500 programmer, and that seems the one being used (in the Nano presumably).
- - `P port` to identify the serial port to which the programmer is attached.
- - `-b baudrate`, bit confusing, we are using SPI, not RS-232 that the avrdude manual mentions.
+ - `P port` identifies the serial port to which the programmer is attached.
+ - `-b baudrate`, confuses me: we are using SPI, not RS-232, which the avrdude manual mentions.
  - `-e` causes a chip erase to be executed. This is a relevant observation: 
-   the entire flash is erased, including any bootloader that might be already there.
+   the entire flash is erased, including any bootloader that might already be there.
 
-Next come the important parameter, the `U`s, to write to non-volatile memories.
+Next come the important parameters, the `U`s.
+These parameters encode writes to non-volatile memories.
 Here the `U`s write the fuses. 
  - There are four of them `lock`, `efuse`, `hfuse`, and `lfuse`.
    The avrdude manual explains: lock is the lock byte, efuse is the extended fuse byte, hfuse is the high fuse byte, lfuse is the low fuse byte.
  - The argument of `U` is `memtype:op:data:format`
    - `memtype` is either `flash` or `eeprom`, or `lock`, `hfuse`, `lfuse`, or `efuse`, ...
-   - after the `:` comes `op`: `r`, `w`, or `v` meaning you can use r (read), w (write), or v (verify).
+   - after the `:` comes `op`: `r`, `w`, or `v` meaning you can read (r), write (w), or verify (v).
    - after the next `:` comes data, an inline value or a filename.
    - a final `:` gives the format, important is `m` for immediate (inline) value, or `i` for intel hex encoded file.
 
@@ -241,10 +249,12 @@ Here the `U`s write the fuses.
 Let's check what the IDE tried to write to the fuses.
 
 One explanation is on this [page](https://circuitdigest.com/microcontroller-projects/understanding-fuse-bits-in-atmega328p-to-enhance-arduino-programming-skills).
-However, it is for the ATMega328P, so also check the [ATMega328PB datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/40001906C.pdf)
+However, it is for the ATMega328P, so better to check the [ATMega328PB datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/40001906C.pdf)
 (do not use the old 2017 revision A datasheet, but at least the 2018 revision C datasheet).
 
 **Please note that one aspect is rather confusing for fuses**: a 1 in a fuse bit is referred to as "unprogrammed". In other words, fuse bits are "low-active".
+
+What does the command write?
 
  - lock to 0x3F or `0011 1111`  
  
@@ -254,7 +264,7 @@ However, it is for the ATMega328P, so also check the [ATMega328PB datasheet](htt
    Writing a 0 in one of those 6 activates some lock such as "programming of the Flash and EEPROM is disabled".
    I don't want or need to lock my firmware - it's on github :-) anyhow.
    
-   The value 0b0011_1111 or 0x3F makes sense for the lock byte.
+   The value 0b0011_1111 or 0x3F makes sense for my lock byte (nothing locked).
    
  - efuse to 0xFD or `1111 1101`  
  
@@ -333,7 +343,7 @@ However, it is for the ATMega328P, so also check the [ATMega328PB datasheet](htt
      This configuration results in maximum start-up time 16k plus 19k clock cycles plus 65ms.
      For an 8MHz clock, 35k cycles is 4.5ms, so total delay is just below 70ms. 
      Looks safe and not unusable long.
-     And we do have an external oscillator who presumably need some time to settle. 
+     And we do have an external oscillator who presumably needs some time to settle. 
      
    - bit 3210 set to `1111` - CKSEL (ClocK source SELect). 
    
@@ -353,21 +363,22 @@ Summarizing, the command tried to write
 
 
 The write command failed.
-However, as we see later, I do have the fuses at the values I want, not sure why.
+However, as we see later, I do have the fuses at the values I want, not sure why; safe defaults?
 
-```
+```text
 avrdude: safemode: lfuse reads as FF
 avrdude: safemode: hfuse reads as DE
 avrdude: safemode: efuse reads as F5
 ```
 
-We do not need to burn the bootlader (or the fuse bits), we can also directly flash the application.
+Conclusion: we do not need to burn the bootlader (or the fuse bits), 
+we will directly flash the application.
 
 
 ### Flashing the application using avrdude
 
 The Tools menu shows how the compiler should build (`Board`, `Processor`).
-It also shows how the (hidden) avrdude shall communicate (`Port`) to the board when pressing upload (or `Sketch > Upload`).
+It also shows how the (hidden) avrdude shall communicate (`Port`) to the board when executing Upload.
 It also has `Programmer`, this is normally NOT used. It is only used when selecting `Burn Bootlader`.
 
 ![Tools menu](burn-bootloader.png)
@@ -377,7 +388,7 @@ The Sketch menu has an entry I always ignored: `Upload Using Programmer`.
 
 ![Sketch menu](upload.png)
 
-With the [ledtest](ledtest) sketch loaded in the IDE, and the same settings in `Tools` as before
+With the [ledtest](ledtest) sketch loaded in the IDE, and the same settings in `Tools` as before, namely
  - `Board` is `Arduino Pro or Pro Mini` - this is the board closest to the SSoSS.
  - `Processor` is `ATmega328P (3.3V, 8MHz)` - the board has an 8MHz oscillator and will run on 3V3 (although now it run son 5V).
  - `Port` is the port the programmer is connected to (`COM5` in my example)
@@ -389,7 +400,7 @@ I suggest that before you flash, you select
 `File > Preferences > Show verbose output during: > upload`. 
 Then this is the result.
 
-```txt
+```text
 Sketch uses 2200 bytes (7%) of program storage space. Maximum is 30720 bytes.
 Global variables use 202 bytes (9%) of dynamic memory, leaving 1846 bytes for local variables. Maximum is 2048 bytes.
 C:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17/bin/avrdude -CC:\Users\maarten\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17/etc/avrdude.conf -v -patmega328p -cstk500v1 -PCOM5 -b19200 -Uflash:w:C:\Users\maarten\AppData\Local\Temp\arduino_build_617119/ledtest.ino.hex:i 
@@ -588,12 +599,14 @@ C:\Users\maarten\Desktop\flashing\ledtest>
 
 And indeed, the small patch of passing the correct MCU ID fixed the problem.
 
-And we get feedback on the fuses - they are exactly as we want them 9see previous section)!
-
-I soldered all resistors at the front side - [JLCPCB](https://jlcpcb.com/DMP) will only mount components
-on one side. I moved a LED around to check that all segments are working - only after a successful test I will solder the 7-segments (they overlay the resistors).
+And we get feedback on the fuses - they are exactly as we want them (see previous section)!
 
 Here you see [one LED blinking](https://youtu.be/dpqHkJS7RNk) to prove that the flashing worked.
+
+I soldered all resistors at the front side - [JLCPCB](https://jlcpcb.com/DMP) will only mount components
+on one side. I moved a spare LED around to check that all segments resistors are correctly soldered.
+I want a successful test before I solder the 7-segments since they overlay the resistors.
+
 
 ## Problems
 
@@ -606,12 +619,15 @@ but to flash `ledtest.ino.eightanaloginputs.hex`.
 Without flashing the bootloader the board runs my ledtest app when powered on!
 
 Next, I flashed the official [SSoS firmware](../../firmware/SSoS) - I added a similar flash script.
-Flashing works, booting works, but the display flickers.
+Flashing works, booting works, good.
+
+But the display flickers.
 It is hard to see on the [video](https://youtu.be/p-Qe8X2YwIE).
-My guess: fuses need tweaking to get a faster clock.
+My first guess: fuses need tweaking to get a faster clock.
+Bit let's measure.
 
 The standard firmware shows `SSoS` on power up. I put a probe on Segment A.
-It should be high for unit 0, 1, not for 2 and agaian for 3.
+It should be high for unit 0, 1, not for 2 and again for 3.
 The logic analyzer confirms that, see the blue rectangle that encircles one frame (4 units).
 
 ![timing](segment-a.png)
@@ -626,8 +642,8 @@ The driver [drv7s.cpp](../../firmware/SSoS/drv7s.cpp#L157) had hard-wired the cl
 OCR2A = 16000000/*CPU*/  /  64/*prescaler*/  /  1000/*targetfreq*/  -  1;
 ```
 
-and I now changed that to use the system macro `F_CPU` 
-(which is 8000000 if we compile for `Board` the `Arduino Pro or Pro Mini` and `Processor` at `ATmega328P (3.3V, 8MHz)`).
+and I now changed that to use the system macro `F_CPU`, which is 
+8000000 if we compile for `Board` the `Arduino Pro or Pro Mini` and `Processor` at `ATmega328P (3.3V, 8MHz)`.
 
 ```c++
 OCR2A = F_CPU/*CPU*/  /  64/*prescaler*/  /  1000/*targetfreq*/  -  1;
